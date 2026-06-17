@@ -4,6 +4,7 @@ import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Collaboration from '@tiptap/extension-collaboration';
 import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
+import Placeholder from '@tiptap/extension-placeholder';
 import type { User } from '@rtc/shared';
 import { canEdit, type DocumentRole } from '@rtc/shared';
 import { SocketProvider } from '../lib/SocketProvider';
@@ -56,6 +57,7 @@ export function CollaborativeEditor({ documentId, user, role, seedHtml, onEditor
         // History is provided by the Collaboration extension; disable StarterKit's.
         StarterKit.configure({ history: false }),
         Collaboration.configure({ document: ydoc }),
+        Placeholder.configure({ placeholder: 'Start writing…' }),
         CollaborationCursor.configure({
           provider: providerRef.current,
           user: { name: user.displayName, color: colorForUser(user.id) },
@@ -84,10 +86,17 @@ export function CollaborativeEditor({ documentId, user, role, seedHtml, onEditor
 
   return (
     <div className="editor-wrap">
-      <div className={`status status-${status}`}>
-        <span className="dot" /> {status}
+      <div className="editor-bar">
+        {editable ? (
+          <EditorToolbar editor={editor} />
+        ) : (
+          <span className="muted readonly-label">Read only</span>
+        )}
+        <div className={`status status-${status}`}>
+          <span className="dot" />
+          <span className="status-text">{status}</span>
+        </div>
       </div>
-      {editable && <EditorToolbar editor={editor} />}
       <EditorContent editor={editor} />
     </div>
   );
