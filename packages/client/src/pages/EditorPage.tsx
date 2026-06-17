@@ -11,6 +11,7 @@ import { VersionHistory } from '../components/VersionHistory';
 import { ShareDialog } from '../components/ShareDialog';
 import { ExportMenu } from '../components/ExportMenu';
 import { PresenceAvatars } from '../components/PresenceAvatars';
+import { ThemeToggle } from '../components/ThemeToggle';
 import { templateById } from '../lib/templates';
 
 export function EditorPage() {
@@ -85,6 +86,7 @@ export function EditorPage() {
             History
           </button>
           <ExportMenu editor={editor} title={title || 'document'} />
+          <ThemeToggle />
           {doc.role === 'owner' && <button onClick={() => setShowShare(true)}>Share</button>}
         </div>
       </header>

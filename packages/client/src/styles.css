@@ -802,6 +802,12 @@ h1 {
   color: var(--danger);
 }
 
+.icon-btn {
+  padding: 0.45rem 0.55rem;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
 /* ---- User menu ---- */
 .user-menu {
   position: relative;

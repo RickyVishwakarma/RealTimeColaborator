@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { create } from 'zustand';
 
 export type Theme = 'light' | 'dark';
 
@@ -9,7 +9,7 @@ function systemTheme(): Theme {
 }
 
 /** The active theme: an explicit user choice, otherwise the OS preference. */
-export function resolveTheme(): Theme {
+function resolveTheme(): Theme {
   const stored = localStorage.getItem(KEY);
   return stored === 'light' || stored === 'dark' ? stored : systemTheme();
 }
@@ -23,21 +23,21 @@ export function initTheme(): void {
   applyTheme(resolveTheme());
 }
 
-/** React hook: current theme + a toggle that persists the choice. */
-export function useTheme(): { theme: Theme; toggle: () => void } {
-  const [theme, setTheme] = useState<Theme>(resolveTheme);
-
-  useEffect(() => {
-    applyTheme(theme);
-  }, [theme]);
-
-  function toggle(): void {
-    setTheme((prev) => {
-      const next = prev === 'dark' ? 'light' : 'dark';
-      localStorage.setItem(KEY, next);
-      return next;
-    });
-  }
-
-  return { theme, toggle };
+interface ThemeState {
+  theme: Theme;
+  toggle: () => void;
 }
+
+/**
+ * Shared theme store so every toggle (user menu, editor header) stays in sync
+ * and the choice is persisted.
+ */
+export const useTheme = create<ThemeState>((set, get) => ({
+  theme: resolveTheme(),
+  toggle: () => {
+    const next: Theme = get().theme === 'dark' ? 'light' : 'dark';
+    localStorage.setItem(KEY, next);
+    applyTheme(next);
+    set({ theme: next });
+  },
+}));
