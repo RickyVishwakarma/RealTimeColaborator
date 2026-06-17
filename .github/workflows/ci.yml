@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: rtc
+          POSTGRES_PASSWORD: rtc
+          POSTGRES_DB: rtc
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U rtc"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgres://rtc:rtc@localhost:5432/rtc
+      REDIS_URL: redis://localhost:6379
+      JWT_ACCESS_SECRET: ci-access-secret
+      JWT_REFRESH_SECRET: ci-refresh-secret
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build shared package
+        run: npm run build --workspace=@rtc/shared
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint --if-present
+
+      - name: Run migrations
+        run: npm run migrate --workspace=@rtc/server
+
+      - name: Test
+        run: npm test --if-present
+
+      - name: Build all
+        run: npm run build
+
+  docker:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build server image
+        run: docker build -f packages/server/Dockerfile -t rtc-server:${{ github.sha }} .
+      - name: Build client image
+        run: docker build -f packages/client/Dockerfile -t rtc-client:${{ github.sha }} .

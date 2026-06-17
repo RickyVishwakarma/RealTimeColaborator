@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rtc-client
+  namespace: rtc
+  labels: { app: rtc-client }
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: rtc-client }
+  template:
+    metadata:
+      labels: { app: rtc-client }
+    spec:
+      containers:
+        - name: client
+          image: rtc-client:latest # replace with your registry/tag in CD
+          ports:
+            - containerPort: 80
+          resources:
+            requests: { cpu: '50m', memory: '64Mi' }
+            limits: { cpu: '250m', memory: '128Mi' }
+          readinessProbe:
+            httpGet: { path: /, port: 80 }
+            initialDelaySeconds: 3
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rtc-client
+  namespace: rtc
+spec:
+  selector: { app: rtc-client }
+  ports:
+    - port: 80
+      targetPort: 80

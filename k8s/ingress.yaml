@@ -1,0 +1,37 @@
+# NGINX ingress. WebSocket upgrade + sticky sessions for Socket.io.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rtc-ingress
+  namespace: rtc
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '3600'
+    nginx.ingress.kubernetes.io/proxy-send-timeout: '3600'
+    # Sticky sessions keep a client pinned to one server pod for its WS connection.
+    nginx.ingress.kubernetes.io/affinity: cookie
+    nginx.ingress.kubernetes.io/affinity-mode: persistent
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [app.example.com, api.example.com]
+      secretName: rtc-tls
+  rules:
+    - host: api.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: rtc-server
+                port: { number: 80 }
+    - host: app.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: rtc-client
+                port: { number: 80 }
