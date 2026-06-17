@@ -134,7 +134,9 @@ export function CollaborativeEditor({
           <span className="status-text">{status}</span>
         </div>
       </div>
-      <EditorContent editor={editor} />
+      <div className="editor-scroll">
+        <EditorContent editor={editor} />
+      </div>
       <div className="editor-footer muted">
         <span>{wordCount} words</span>
         <span>{charCount} characters</span>

@@ -392,12 +392,21 @@ h1 {
   font-size: 0.85rem;
 }
 
-/* ---- Editor ---- */
+/* ---- Editor (full-screen, distraction-free) ---- */
 .editor-page {
-  max-width: 1040px;
+  max-width: none;
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  gap: 0;
 }
 .editor-topbar {
   gap: 1rem;
+  padding: 0.55rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
 }
 .editor-title-row {
   flex: 1;
@@ -471,10 +480,16 @@ h1 {
 
 .editor-wrap {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   overflow: hidden;
+}
+.editor-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .editor-bar {
@@ -493,12 +508,12 @@ h1 {
 }
 
 .prose-editor {
-  min-height: 56vh;
-  max-width: 720px;
+  min-height: 100%;
+  max-width: 760px;
   margin: 0 auto;
-  padding: 2.5rem 1.5rem;
+  padding: 3rem 1.5rem 6rem;
   line-height: 1.7;
-  font-size: 1.02rem;
+  font-size: 1.05rem;
   outline: none;
 }
 .prose-editor:focus {
@@ -642,12 +657,20 @@ h1 {
   margin: 0.2rem 0.35rem;
 }
 
-/* ---- Editor + comments layout ---- */
+/* ---- Editor + comments layout (fills remaining viewport height) ---- */
+.editor-layout {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.editor-layout > .editor-wrap {
+  flex: 1;
+  min-width: 0;
+}
 .editor-layout.with-comments {
   display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 1.25rem;
-  align-items: start;
+  grid-template-columns: 1fr 340px;
+  gap: 0;
 }
 @media (max-width: 820px) {
   .editor-layout.with-comments {
@@ -658,16 +681,13 @@ h1 {
 /* ---- Comments ---- */
 .comments-panel {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  border-left: 1px solid var(--border);
   padding: 1.1rem;
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
-  position: sticky;
-  top: 1rem;
-  max-height: calc(100vh - 2rem);
+  height: 100%;
+  min-height: 0;
   overflow-y: auto;
 }
 .comments-header {
