@@ -14,6 +14,7 @@ import { getRole } from '../documents/permissions.js';
 import { redis, redisSub } from '../redis.js';
 import { acquireDoc, releaseDoc, applyUpdate, encodeState } from './docManager.js';
 import { setIo } from './io.js';
+import { wsConnections } from '../metrics.js';
 
 interface SocketData {
   userId: string;
@@ -82,6 +83,7 @@ export function attachCollabGateway(httpServer: HttpServer): Server {
   }
 
   io.on('connection', (socket: CollabSocket) => {
+    wsConnections.inc();
     logger.debug({ userId: socket.data.userId, sid: socket.id }, 'Socket connected');
 
     socket.on('doc:join', async ({ documentId }, ack) => {
@@ -136,6 +138,7 @@ export function attachCollabGateway(httpServer: HttpServer): Server {
     });
 
     socket.on('disconnect', async () => {
+      wsConnections.dec();
       for (const documentId of socket.data.roles.keys()) {
         await releaseDoc(documentId);
       }

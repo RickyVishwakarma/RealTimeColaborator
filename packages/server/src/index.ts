@@ -26,3 +26,13 @@ async function shutdown(signal: string): Promise<void> {
 
 process.on('SIGTERM', () => void shutdown('SIGTERM'));
 process.on('SIGINT', () => void shutdown('SIGINT'));
+
+// Last-resort guards: log loudly rather than crashing silently. An uncaught
+// exception leaves the process in an unknown state, so we drain and exit.
+process.on('unhandledRejection', (reason) => {
+  logger.error({ reason }, 'Unhandled promise rejection');
+});
+process.on('uncaughtException', (err) => {
+  logger.fatal({ err }, 'Uncaught exception — shutting down');
+  void shutdown('uncaughtException');
+});

@@ -1,6 +1,7 @@
 import * as Y from 'yjs';
 import { query } from '../db/pool.js';
 import { logger } from '../logger.js';
+import { activeDocuments, docUpdatesTotal, docUpdateBytes } from '../metrics.js';
 
 /**
  * Manages in-memory Yjs documents shared by all clients connected to a server.
@@ -71,6 +72,7 @@ export async function acquireDoc(documentId: string): Promise<Y.Doc> {
       Y.applyUpdate(managed.doc, new Uint8Array(snapshot));
     }
     docs.set(documentId, managed);
+    activeDocuments.set(docs.size);
   }
   managed.refs += 1;
   return managed.doc;
@@ -84,6 +86,7 @@ export async function releaseDoc(documentId: string): Promise<void> {
   if (managed.refs <= 0) {
     await managed.flush();
     docs.delete(documentId);
+    activeDocuments.set(docs.size);
   }
 }
 
@@ -100,6 +103,8 @@ export async function applyUpdate(
   if (!managed) return;
   Y.applyUpdate(managed.doc, update, 'remote');
   managed.markDirty();
+  docUpdatesTotal.inc();
+  docUpdateBytes.observe(update.byteLength);
   await query('INSERT INTO document_changes (document_id, user_id, update_data) VALUES ($1, $2, $3)', [
     documentId,
     userId,

@@ -11,6 +11,10 @@ spec:
   template:
     metadata:
       labels: { app: rtc-server }
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '4000'
+        prometheus.io/path: /metrics
     spec:
       containers:
         - name: server
@@ -31,7 +35,8 @@ spec:
             requests: { cpu: '250m', memory: '256Mi' }
             limits: { cpu: '1', memory: '512Mi' }
           readinessProbe:
-            httpGet: { path: /health, port: 4000 }
+            # Gate traffic on dependency health (Postgres + Redis).
+            httpGet: { path: /ready, port: 4000 }
             initialDelaySeconds: 5
             periodSeconds: 10
           livenessProbe:
