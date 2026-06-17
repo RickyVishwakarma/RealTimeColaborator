@@ -1,12 +1,18 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { canManage, type DocumentSummary } from '@rtc/shared';
+import { canManage, type DocumentSummary, type SearchResult } from '@rtc/shared';
 import { pool, query } from '../db/pool.js';
 import { requireAuth } from '../auth/middleware.js';
 import { getRole } from './permissions.js';
+import { commentRouter } from './comments.js';
+import { versionRouter } from './versions.js';
 
 export const documentRouter = Router();
 documentRouter.use(requireAuth);
+
+// Nested routes
+documentRouter.use('/:id/comments', commentRouter);
+documentRouter.use('/:id/versions', versionRouter);
 
 interface DocRow {
   id: string;
@@ -78,6 +84,47 @@ documentRouter.post('/', async (req, res) => {
   } finally {
     client.release();
   }
+});
+
+/**
+ * Full-text search across documents the user can access. Ranks tsvector
+ * matches and also catches fuzzy title matches via trigram similarity.
+ * Declared before '/:id' so the literal path takes precedence.
+ */
+documentRouter.get('/search', async (req, res) => {
+  const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+  if (q.length < 2) {
+    res.json({ results: [] });
+    return;
+  }
+  const result = await query<{
+    id: string;
+    title: string;
+    role: SearchResult['role'];
+    snippet: string;
+    updated_at: Date;
+  }>(
+    `SELECT d.id, d.title, p.role, d.updated_at,
+            ts_headline('english', d.search_text, plainto_tsquery('english', $2),
+              'MaxFragments=1, MaxWords=18, MinWords=5, StartSel=<<, StopSel=>>') AS snippet
+     FROM documents d
+     JOIN document_permissions p ON p.document_id = d.id
+     WHERE p.user_id = $1
+       AND d.deleted_at IS NULL
+       AND (d.search_tsv @@ plainto_tsquery('english', $2) OR d.title ILIKE '%' || $2 || '%')
+     ORDER BY ts_rank(d.search_tsv, plainto_tsquery('english', $2)) DESC,
+              similarity(d.title, $2) DESC
+     LIMIT 20`,
+    [req.userId, q],
+  );
+  const results: SearchResult[] = result.rows.map((r) => ({
+    id: r.id,
+    title: r.title,
+    role: r.role,
+    snippet: r.snippet ?? '',
+    updatedAt: r.updated_at.toISOString(),
+  }));
+  res.json({ results });
 });
 
 /** Fetch a single document's metadata (requires any access). */

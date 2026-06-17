@@ -1,14 +1,26 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import type { DocumentSummary } from '@rtc/shared';
+import type { DocumentSummary, SearchResult } from '@rtc/shared';
 import { api } from '../api';
 import { useAuth } from '../store';
+
+// Escape user content, then turn ts_headline's <<…>> markers into <mark> tags.
+function renderSnippet(snippet: string): string {
+  const escaped = snippet
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  return escaped.replace(/&lt;&lt;/g, '<mark>').replace(/&gt;&gt;/g, '</mark>');
+}
 
 export function DocumentsPage() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [docs, setDocs] = useState<DocumentSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<SearchResult[] | null>(null);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   async function refresh() {
     const { documents } = await api.listDocuments();
@@ -19,6 +31,20 @@ export function DocumentsPage() {
   useEffect(() => {
     void refresh();
   }, []);
+
+  // Debounced full-text search; clearing the box restores the full list.
+  function handleSearchChange(value: string) {
+    setQuery(value);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    if (value.trim().length < 2) {
+      setResults(null);
+      return;
+    }
+    searchTimer.current = setTimeout(async () => {
+      const { results } = await api.search(value.trim());
+      setResults(results);
+    }, 250);
+  }
 
   async function handleCreate() {
     const { document } = await api.createDocument('Untitled');
@@ -42,9 +68,38 @@ export function DocumentsPage() {
         </div>
       </header>
 
-      <button onClick={() => void handleCreate()}>+ New document</button>
+      <div className="row search-row">
+        <input
+          className="search-input"
+          value={query}
+          onChange={(e) => handleSearchChange(e.target.value)}
+          placeholder="Search documents…"
+        />
+        <button onClick={() => void handleCreate()}>+ New document</button>
+      </div>
 
-      {loading ? (
+      {results !== null ? (
+        results.length === 0 ? (
+          <p className="muted">No matches for “{query}”.</p>
+        ) : (
+          <ul className="doc-list">
+            {results.map((r) => (
+              <li key={r.id} className="card doc-item">
+                <Link to={`/doc/${r.id}`} className="doc-title">
+                  {r.title}
+                </Link>
+                <span className="badge">{r.role}</span>
+                {r.snippet && (
+                  <span
+                    className="muted snippet"
+                    dangerouslySetInnerHTML={{ __html: renderSnippet(r.snippet) }}
+                  />
+                )}
+              </li>
+            ))}
+          </ul>
+        )
+      ) : loading ? (
         <p className="muted">Loading…</p>
       ) : docs.length === 0 ? (
         <p className="muted">No documents yet. Create your first one!</p>

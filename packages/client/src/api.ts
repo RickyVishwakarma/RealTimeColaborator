@@ -1,5 +1,9 @@
 import type {
   AuthResponse,
+  Comment,
+  CommentThread,
+  DocumentVersion,
+  SearchResult,
   DocumentDetail,
   DocumentSummary,
   SignupPayload,
@@ -74,10 +78,39 @@ export const api = {
   me: () => request<{ user: import('@rtc/shared').User }>('/api/auth/me'),
 
   listDocuments: () => request<{ documents: DocumentSummary[] }>('/api/documents'),
+  search: (q: string) =>
+    request<{ results: SearchResult[] }>(`/api/documents/search?q=${encodeURIComponent(q)}`),
   createDocument: (title: string) =>
     request<{ document: DocumentSummary }>('/api/documents', { method: 'POST', body: { title } }),
   getDocument: (id: string) => request<{ document: DocumentDetail }>(`/api/documents/${id}`),
   shareDocument: (id: string, email: string, role: 'editor' | 'commenter' | 'viewer') =>
     request<void>(`/api/documents/${id}/share`, { method: 'POST', body: { email, role } }),
   deleteDocument: (id: string) => request<void>(`/api/documents/${id}`, { method: 'DELETE' }),
+
+  listComments: (docId: string) =>
+    request<{ threads: CommentThread[] }>(`/api/documents/${docId}/comments`),
+  createComment: (docId: string, body: string, threadId?: string) =>
+    request<{ comment: Comment }>(`/api/documents/${docId}/comments`, {
+      method: 'POST',
+      body: { body, threadId: threadId ?? null },
+    }),
+  resolveThread: (docId: string, commentId: string, resolved: boolean) =>
+    request<void>(`/api/documents/${docId}/comments/${commentId}/resolve`, {
+      method: 'POST',
+      body: { resolved },
+    }),
+  deleteComment: (docId: string, commentId: string) =>
+    request<void>(`/api/documents/${docId}/comments/${commentId}`, { method: 'DELETE' }),
+
+  listVersions: (docId: string) =>
+    request<{ versions: DocumentVersion[] }>(`/api/documents/${docId}/versions`),
+  createVersion: (docId: string, label: string) =>
+    request<{ version: DocumentVersion }>(`/api/documents/${docId}/versions`, {
+      method: 'POST',
+      body: { label },
+    }),
+  previewVersion: (docId: string, versionId: string) =>
+    request<{ content: string }>(`/api/documents/${docId}/versions/${versionId}/preview`),
+  restoreVersion: (docId: string, versionId: string) =>
+    request<void>(`/api/documents/${docId}/versions/${versionId}/restore`, { method: 'POST' }),
 };

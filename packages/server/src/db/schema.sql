@@ -2,6 +2,7 @@
 -- Run via `npm run migrate --workspace=@rtc/server`
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 
 CREATE TABLE IF NOT EXISTS users (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -28,6 +29,17 @@ CREATE TABLE IF NOT EXISTS documents (
 CREATE INDEX IF NOT EXISTS idx_documents_owner_id ON documents(owner_id);
 CREATE INDEX IF NOT EXISTS idx_documents_deleted_at ON documents(deleted_at);
 
+-- Full-text search: plain-text content extracted from the CRDT on each flush,
+-- plus a generated tsvector over title + content.
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS search_text TEXT NOT NULL DEFAULT '';
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS search_tsv tsvector
+  GENERATED ALWAYS AS (
+    to_tsvector('english', coalesce(title, '') || ' ' || coalesce(search_text, ''))
+  ) STORED;
+
+CREATE INDEX IF NOT EXISTS idx_documents_search_tsv ON documents USING GIN (search_tsv);
+CREATE INDEX IF NOT EXISTS idx_documents_title_trgm ON documents USING GIN (title gin_trgm_ops);
+
 CREATE TABLE IF NOT EXISTS document_permissions (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   document_id   UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
@@ -51,3 +63,31 @@ CREATE TABLE IF NOT EXISTS document_changes (
 );
 
 CREATE INDEX IF NOT EXISTS idx_changes_document_created ON document_changes(document_id, created_at);
+
+-- Comments & threads. A top-level comment has thread_id = NULL; replies point
+-- at their root comment via thread_id.
+CREATE TABLE IF NOT EXISTS comments (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+  thread_id   UUID REFERENCES comments(id) ON DELETE CASCADE,
+  user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  body        TEXT NOT NULL,
+  resolved_at TIMESTAMPTZ,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_comments_document_id ON comments(document_id);
+CREATE INDEX IF NOT EXISTS idx_comments_thread_id ON comments(thread_id);
+
+-- Named, restorable version snapshots (full encoded Yjs state at a point in time).
+CREATE TABLE IF NOT EXISTS document_snapshots (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+  label       VARCHAR(255) NOT NULL DEFAULT 'Snapshot',
+  state       BYTEA NOT NULL,
+  created_by  UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_snapshots_document_created ON document_snapshots(document_id, created_at DESC);

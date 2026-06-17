@@ -13,6 +13,7 @@ import { verifyAccessToken } from '../auth/tokens.js';
 import { getRole } from '../documents/permissions.js';
 import { redis, redisSub } from '../redis.js';
 import { acquireDoc, releaseDoc, applyUpdate, encodeState } from './docManager.js';
+import { setIo } from './io.js';
 
 interface SocketData {
   userId: string;
@@ -40,6 +41,9 @@ export function attachCollabGateway(httpServer: HttpServer): Server {
     cors: { origin: config.CLIENT_ORIGIN, credentials: true },
     maxHttpBufferSize: 5 * 1024 * 1024, // 5MB cap per message
   });
+
+  // Expose the server so REST routes (e.g. version restore) can broadcast.
+  setIo(io as unknown as import('socket.io').Server);
 
   // --- Authentication handshake ---
   io.use((socket, next) => {

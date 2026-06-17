@@ -35,6 +35,43 @@ export interface Collaborator {
   role: DocumentRole;
 }
 
+export interface CommentAuthor {
+  id: string;
+  displayName: string;
+}
+
+export interface Comment {
+  id: string;
+  documentId: string;
+  threadId: string | null;
+  author: CommentAuthor;
+  body: string;
+  resolvedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** A root comment with its replies, ordered oldest-first. */
+export interface CommentThread {
+  root: Comment;
+  replies: Comment[];
+}
+
+export interface SearchResult {
+  id: string;
+  title: string;
+  role: DocumentRole;
+  snippet: string;
+  updatedAt: string;
+}
+
+export interface DocumentVersion {
+  id: string;
+  label: string;
+  author: CommentAuthor | null;
+  createdAt: string;
+}
+
 // ---- Auth payloads ----
 
 export interface AuthCredentials {
@@ -119,4 +156,9 @@ export function canEdit(role: DocumentRole): boolean {
 /** Returns true if the role is allowed to manage sharing / delete. */
 export function canManage(role: DocumentRole): boolean {
   return role === 'owner';
+}
+
+/** Returns true if the role is allowed to post comments. */
+export function canComment(role: DocumentRole): boolean {
+  return role === 'owner' || role === 'editor' || role === 'commenter';
 }

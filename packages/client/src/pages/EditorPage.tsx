@@ -5,6 +5,8 @@ import { canEdit } from '@rtc/shared';
 import { api } from '../api';
 import { useAuth } from '../store';
 import { CollaborativeEditor } from '../components/CollaborativeEditor';
+import { CommentsPanel } from '../components/CommentsPanel';
+import { VersionHistory } from '../components/VersionHistory';
 import { ShareDialog } from '../components/ShareDialog';
 
 export function EditorPage() {
@@ -13,6 +15,8 @@ export function EditorPage() {
   const [doc, setDoc] = useState<DocumentDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showShare, setShowShare] = useState(false);
+  const [showComments, setShowComments] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -35,16 +39,30 @@ export function EditorPage() {
           <h1>{doc.title}</h1>
           <span className="badge">{doc.role}</span>
         </div>
-        {doc.role === 'owner' && <button onClick={() => setShowShare(true)}>Share</button>}
+        <div className="row">
+          <button className="secondary" onClick={() => setShowComments((v) => !v)}>
+            {showComments ? 'Hide comments' : 'Show comments'}
+          </button>
+          <button className="secondary" onClick={() => setShowHistory(true)}>
+            History
+          </button>
+          {doc.role === 'owner' && <button onClick={() => setShowShare(true)}>Share</button>}
+        </div>
       </header>
 
       {!canEdit(doc.role) && (
         <p className="muted banner">You have read-only access to this document.</p>
       )}
 
-      <CollaborativeEditor documentId={id} user={user} />
+      <div className={`editor-layout ${showComments ? 'with-comments' : ''}`}>
+        <CollaborativeEditor documentId={id} user={user} />
+        {showComments && <CommentsPanel documentId={id} role={doc.role} user={user} />}
+      </div>
 
       {showShare && <ShareDialog documentId={id} onClose={() => setShowShare(false)} />}
+      {showHistory && (
+        <VersionHistory documentId={id} role={doc.role} onClose={() => setShowHistory(false)} />
+      )}
     </div>
   );
 }
