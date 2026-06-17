@@ -1,9 +1,11 @@
+import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import { z } from 'zod';
 
-// Load .env from repo root (two levels up from packages/server)
-dotenv.config({ path: new URL('../../../.env', import.meta.url).pathname });
-dotenv.config(); // fall back to local .env / process env
+// Load .env from the repo root. fileURLToPath gives a correct OS path on
+// Windows too (URL.pathname would yield a malformed "/C:/..." path).
+dotenv.config({ path: fileURLToPath(new URL('../../../.env', import.meta.url)) });
+dotenv.config(); // fall back to a local .env / already-set process env
 
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
