@@ -8,9 +8,12 @@
   --text: #1d1d1b;
   --muted: #8a8a82;
   --accent: #3a3a38;
+  --accent-text: #ffffff;
   --accent-soft: #f0efec;
   --danger: #c4554d;
   --success: #4a8f5b;
+  --mark: #fbeeb0;
+  color-scheme: light;
 
   --radius: 10px;
   --radius-sm: 7px;
@@ -24,6 +27,23 @@
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+:root[data-theme='dark'] {
+  --bg: #1a1a18;
+  --surface: #232320;
+  --surface-2: #2a2a27;
+  --border: #34332f;
+  --border-strong: #45443f;
+  --text: #ececea;
+  --muted: #9b9a92;
+  --accent: #ececea;
+  --accent-text: #1a1a18;
+  --accent-soft: #2f2e2b;
+  --danger: #e0857f;
+  --success: #6cbf83;
+  --mark: #6b5d1f;
+  color-scheme: dark;
 }
 
 * {
@@ -236,7 +256,7 @@ textarea:focus {
 /* ---- Buttons ---- */
 button {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-text);
   border: 1px solid var(--accent);
   border-radius: var(--radius-sm);
   padding: 0.55rem 0.95rem;
@@ -382,7 +402,7 @@ h1 {
   color: var(--muted);
 }
 .snippet mark {
-  background: #fbeeb0;
+  background: var(--mark);
   color: var(--text);
   border-radius: 3px;
   padding: 0 2px;
@@ -780,6 +800,51 @@ h1 {
 }
 .danger-link:hover {
   color: var(--danger);
+}
+
+/* ---- User menu ---- */
+.user-menu {
+  position: relative;
+}
+.avatar-btn {
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  width: 32px;
+  height: 32px;
+}
+.avatar-btn:hover {
+  opacity: 0.9;
+}
+.user-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.45rem);
+  z-index: 30;
+  width: 220px;
+  padding: 0.4rem;
+  box-shadow: var(--shadow-lg);
+}
+.user-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.5rem 0.6rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.25rem;
+}
+.user-identity strong {
+  font-size: 0.9rem;
+}
+.user-identity .muted {
+  font-size: 0.78rem;
+  word-break: break-all;
+}
+.menu-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 /* ---- Notifications ---- */

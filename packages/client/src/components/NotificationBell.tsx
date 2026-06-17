@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Notification } from '@rtc/shared';
 import { api } from '../api';
+import { timeAgo } from '../lib/time';
 
 const POLL_MS = 30_000;
 
@@ -89,7 +90,9 @@ export function NotificationBell() {
                 >
                   <span className="notif-body">{n.body}</span>
                   {n.documentTitle && <span className="muted notif-doc">{n.documentTitle}</span>}
-                  <span className="muted notif-time">{new Date(n.createdAt).toLocaleString()}</span>
+                  <span className="muted notif-time" title={new Date(n.createdAt).toLocaleString()}>
+                    {timeAgo(n.createdAt)}
+                  </span>
                 </li>
               ))}
             </ul>

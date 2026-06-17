@@ -6,6 +6,8 @@ import { useAuth } from '../store';
 import { NewDocDialog } from '../components/NewDocDialog';
 import { NotificationBell } from '../components/NotificationBell';
 import { Logo } from '../components/Logo';
+import { UserMenu } from '../components/UserMenu';
+import { timeAgo } from '../lib/time';
 import type { DocTemplate } from '../lib/templates';
 
 // Escape user content, then turn ts_headline's <<…>> markers into <mark> tags.
@@ -74,10 +76,7 @@ export function DocumentsPage() {
         <Logo />
         <div className="row">
           <NotificationBell />
-          <span className="muted user-email">{user?.email}</span>
-          <button className="secondary" onClick={() => void logout()}>
-            Log out
-          </button>
+          {user && <UserMenu user={user} onLogout={() => void logout()} />}
         </div>
       </header>
 
@@ -126,7 +125,9 @@ export function DocumentsPage() {
                 {doc.title}
               </Link>
               <span className="badge">{doc.role}</span>
-              <span className="muted">{new Date(doc.updatedAt).toLocaleString()}</span>
+              <span className="muted" title={new Date(doc.updatedAt).toLocaleString()}>
+                {timeAgo(doc.updatedAt)}
+              </span>
               {doc.role === 'owner' && (
                 <button className="danger" onClick={() => void handleDelete(doc.id)}>
                   Delete
