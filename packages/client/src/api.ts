@@ -86,6 +86,8 @@ export const api = {
   getDocument: (id: string) => request<{ document: DocumentDetail }>(`/api/documents/${id}`),
   shareDocument: (id: string, email: string, role: 'editor' | 'commenter' | 'viewer') =>
     request<void>(`/api/documents/${id}/share`, { method: 'POST', body: { email, role } }),
+  renameDocument: (id: string, title: string) =>
+    request<void>(`/api/documents/${id}`, { method: 'PATCH', body: { title } }),
   deleteDocument: (id: string) => request<void>(`/api/documents/${id}`, { method: 'DELETE' }),
 
   listComments: (docId: string) =>

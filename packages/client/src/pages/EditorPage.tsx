@@ -1,15 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import type { Editor } from '@tiptap/react';
 import type { DocumentDetail } from '@rtc/shared';
 import { canEdit } from '@rtc/shared';
 import { api } from '../api';
 import { useAuth } from '../store';
-import { CollaborativeEditor } from '../components/CollaborativeEditor';
+import { CollaborativeEditor, type PresenceUser } from '../components/CollaborativeEditor';
 import { CommentsPanel } from '../components/CommentsPanel';
 import { VersionHistory } from '../components/VersionHistory';
 import { ShareDialog } from '../components/ShareDialog';
 import { ExportMenu } from '../components/ExportMenu';
+import { PresenceAvatars } from '../components/PresenceAvatars';
 import { templateById } from '../lib/templates';
 
 export function EditorPage() {
@@ -18,53 +19,75 @@ export function EditorPage() {
   const { user } = useAuth();
   const [doc, setDoc] = useState<DocumentDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [title, setTitle] = useState('');
   const [showShare, setShowShare] = useState(false);
   const [showComments, setShowComments] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
   const [editor, setEditor] = useState<Editor | null>(null);
+  const [present, setPresent] = useState<PresenceUser[]>([]);
+  const renameTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Template chosen at creation time, passed through router state.
   const templateId = (location.state as { templateId?: string } | null)?.templateId;
   const seedHtml = templateById(templateId)?.html || undefined;
 
   const handleEditorReady = useCallback((e: Editor | null) => setEditor(e), []);
+  const handlePresence = useCallback((users: PresenceUser[]) => setPresent(users), []);
 
   useEffect(() => {
     if (!id) return;
     api
       .getDocument(id)
-      .then(({ document }) => setDoc(document))
+      .then(({ document }) => {
+        setDoc(document);
+        setTitle(document.title);
+      })
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load'));
   }, [id]);
+
+  // Debounced title rename.
+  function handleTitleChange(value: string) {
+    setTitle(value);
+    if (!id) return;
+    if (renameTimer.current) clearTimeout(renameTimer.current);
+    renameTimer.current = setTimeout(() => {
+      void api.renameDocument(id, value.trim() || 'Untitled').catch(() => undefined);
+    }, 500);
+  }
 
   if (error) return <div className="center error">{error}</div>;
   if (!doc || !user || !id) return <div className="center muted">Loading document…</div>;
 
+  const editable = canEdit(doc.role);
+
   return (
     <div className="page editor-page">
-      <header className="topbar">
-        <div className="row">
-          <Link to="/" className="link">
-            ← Documents
+      <header className="topbar editor-topbar">
+        <div className="row editor-title-row">
+          <Link to="/" className="link back-link">
+            ←
           </Link>
-          <h1>{doc.title}</h1>
+          <input
+            className="doc-title-input"
+            value={title}
+            onChange={(e) => handleTitleChange(e.target.value)}
+            disabled={!editable}
+            placeholder="Untitled"
+            aria-label="Document title"
+          />
           <span className="badge">{doc.role}</span>
         </div>
         <div className="row">
+          <PresenceAvatars users={present} selfName={user.displayName} />
           <button className="secondary" onClick={() => setShowComments((v) => !v)}>
-            {showComments ? 'Hide comments' : 'Show comments'}
+            {showComments ? 'Hide comments' : 'Comments'}
           </button>
           <button className="secondary" onClick={() => setShowHistory(true)}>
             History
           </button>
-          <ExportMenu editor={editor} title={doc.title} />
+          <ExportMenu editor={editor} title={title || 'document'} />
           {doc.role === 'owner' && <button onClick={() => setShowShare(true)}>Share</button>}
         </div>
       </header>
-
-      {!canEdit(doc.role) && (
-        <p className="muted banner">You have read-only access to this document.</p>
-      )}
 
       <div className={`editor-layout ${showComments ? 'with-comments' : ''}`}>
         <CollaborativeEditor
@@ -73,6 +96,7 @@ export function EditorPage() {
           role={doc.role}
           seedHtml={seedHtml}
           onEditorReady={handleEditorReady}
+          onPresence={handlePresence}
         />
         {showComments && <CommentsPanel documentId={id} role={doc.role} user={user} />}
       </div>

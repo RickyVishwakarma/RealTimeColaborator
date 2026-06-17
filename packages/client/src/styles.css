@@ -66,6 +66,116 @@ body {
   font-size: 0.85rem;
 }
 
+/* ---- Brand / logo ---- */
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text);
+}
+.logo svg {
+  display: block;
+}
+.logo-word {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 1.25rem;
+  letter-spacing: -0.01em;
+}
+
+.page-title {
+  font-size: 1.35rem;
+  margin: 0;
+}
+
+/* ---- Auth (split brand + form) ---- */
+.auth-split {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+}
+.auth-brand {
+  background: #1d1d1b;
+  color: #f3f2ee;
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2rem;
+}
+.auth-brand .logo,
+.auth-brand .logo-word {
+  color: #f3f2ee;
+}
+.auth-headline {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 2.4rem;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0 0 1rem;
+}
+.auth-sub {
+  font-size: 1.02rem;
+  line-height: 1.6;
+  color: #b9b7b0;
+  margin: 0 0 1.75rem;
+  max-width: 38ch;
+}
+.auth-highlights {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  font-size: 0.95rem;
+  color: #d8d6cf;
+}
+.auth-highlights .check {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 0.7rem;
+  margin-right: 0.5rem;
+}
+.auth-foot {
+  font-size: 0.8rem;
+  color: #8d8b84;
+}
+.auth-form-side {
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+}
+.auth-card-sub {
+  margin: -0.25rem 0 0.5rem;
+  font-size: 0.9rem;
+}
+.auth-mobile-logo {
+  display: none;
+  margin-bottom: 0.5rem;
+}
+.auth-switch {
+  text-align: center;
+  font-size: 0.88rem;
+  margin: 0.25rem 0 0;
+}
+@media (max-width: 760px) {
+  .auth-split {
+    grid-template-columns: 1fr;
+  }
+  .auth-brand {
+    display: none;
+  }
+  .auth-mobile-logo {
+    display: block;
+  }
+}
+
 /* ---- Cards & surfaces ---- */
 .card {
   background: var(--surface);
@@ -278,9 +388,85 @@ h1 {
   padding: 0 2px;
 }
 
+.user-email {
+  font-size: 0.85rem;
+}
+
 /* ---- Editor ---- */
 .editor-page {
   max-width: 1040px;
+}
+.editor-topbar {
+  gap: 1rem;
+}
+.editor-title-row {
+  flex: 1;
+  min-width: 0;
+}
+.back-link {
+  font-size: 1.1rem;
+  padding: 0 0.25rem;
+}
+.doc-title-input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 1.4rem;
+  letter-spacing: -0.01em;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+.doc-title-input:hover:not(:disabled) {
+  background: var(--surface);
+  border-color: var(--border);
+}
+.doc-title-input:focus {
+  background: var(--surface);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(58, 58, 56, 0.08);
+}
+.doc-title-input:disabled {
+  color: var(--text);
+  opacity: 1;
+}
+
+/* ---- Presence avatars ---- */
+.avatars {
+  display: flex;
+  align-items: center;
+}
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #fff;
+  border: 2px solid var(--bg);
+  margin-left: -8px;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+.avatar:first-child {
+  margin-left: 0;
+}
+.avatar-more {
+  background: var(--muted);
+}
+
+/* ---- Word count footer ---- */
+.editor-footer {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding: 0.5rem 1rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.74rem;
+  background: var(--surface-2);
 }
 
 .editor-wrap {
@@ -825,6 +1011,7 @@ h1 {
 @media print {
   .topbar,
   .editor-bar,
+  .editor-footer,
   .comments-panel,
   .banner {
     display: none !important;

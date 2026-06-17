@@ -14,6 +14,12 @@ import { colorForUser } from '../config';
 
 type ConnStatus = 'connecting' | 'connected' | 'disconnected';
 
+export interface PresenceUser {
+  clientId: number;
+  name: string;
+  color: string;
+}
+
 interface Props {
   documentId: string;
   user: User;
@@ -22,9 +28,18 @@ interface Props {
   seedHtml?: string;
   /** Receives the editor instance so the page can drive export, etc. */
   onEditorReady?: (editor: Editor | null) => void;
+  /** Receives the live list of present collaborators (from awareness). */
+  onPresence?: (users: PresenceUser[]) => void;
 }
 
-export function CollaborativeEditor({ documentId, user, role, seedHtml, onEditorReady }: Props) {
+export function CollaborativeEditor({
+  documentId,
+  user,
+  role,
+  seedHtml,
+  onEditorReady,
+  onPresence,
+}: Props) {
   const ydoc = useMemo(() => new Y.Doc(), [documentId]);
   const providerRef = useRef<SocketProvider | null>(null);
   const [status, setStatus] = useState<ConnStatus>('connecting');
@@ -74,6 +89,23 @@ export function CollaborativeEditor({ documentId, user, role, seedHtml, onEditor
     onEditorReady?.(editor);
   }, [editor, onEditorReady]);
 
+  // Report present collaborators from the awareness protocol.
+  useEffect(() => {
+    const awareness = providerRef.current?.awareness;
+    if (!awareness || !onPresence) return;
+    const emit = () => {
+      const users: PresenceUser[] = [];
+      awareness.getStates().forEach((state, clientId) => {
+        const u = (state as { user?: { name: string; color: string } }).user;
+        if (u?.name) users.push({ clientId, name: u.name, color: u.color });
+      });
+      onPresence(users);
+    };
+    awareness.on('change', emit);
+    emit();
+    return () => awareness.off('change', emit);
+  }, [onPresence]);
+
   // Seed a template once, only when synced into a still-empty document, so we
   // don't clobber existing content or race other collaborators.
   useEffect(() => {
@@ -83,6 +115,11 @@ export function CollaborativeEditor({ documentId, user, role, seedHtml, onEditor
       seededRef.current = true;
     }
   }, [editor, seedHtml, status]);
+
+  // Re-derived each render; useEditor re-renders the component on every change.
+  const text = editor?.getText() ?? '';
+  const charCount = text.length;
+  const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
 
   return (
     <div className="editor-wrap">
@@ -98,6 +135,10 @@ export function CollaborativeEditor({ documentId, user, role, seedHtml, onEditor
         </div>
       </div>
       <EditorContent editor={editor} />
+      <div className="editor-footer muted">
+        <span>{wordCount} words</span>
+        <span>{charCount} characters</span>
+      </div>
     </div>
   );
 }

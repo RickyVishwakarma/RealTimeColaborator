@@ -5,6 +5,7 @@ import { api } from '../api';
 import { useAuth } from '../store';
 import { NewDocDialog } from '../components/NewDocDialog';
 import { NotificationBell } from '../components/NotificationBell';
+import { Logo } from '../components/Logo';
 import type { DocTemplate } from '../lib/templates';
 
 // Escape user content, then turn ts_headline's <<…>> markers into <mark> tags.
@@ -70,15 +71,17 @@ export function DocumentsPage() {
   return (
     <div className="page">
       <header className="topbar">
-        <h1>Your documents</h1>
+        <Logo />
         <div className="row">
           <NotificationBell />
-          <span className="muted">{user?.email}</span>
+          <span className="muted user-email">{user?.email}</span>
           <button className="secondary" onClick={() => void logout()}>
             Log out
           </button>
         </div>
       </header>
+
+      <h1 className="page-title">Your documents</h1>
 
       <div className="row search-row">
         <input

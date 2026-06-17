@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { canManage, type DocumentSummary, type SearchResult } from '@rtc/shared';
+import { canEdit, canManage, type DocumentSummary, type SearchResult } from '@rtc/shared';
 import { pool, query } from '../db/pool.js';
 import { requireAuth } from '../auth/middleware.js';
 import { getRole } from './permissions.js';
@@ -202,6 +202,27 @@ documentRouter.post('/:id/share', async (req, res) => {
     body: `${actor.rows[0]?.display_name ?? 'Someone'} shared a document with you as ${parsed.data.role}`,
   });
 
+  res.status(204).end();
+});
+
+const renameSchema = z.object({ title: z.string().min(1).max(255) });
+
+/** Rename a document (editor+). */
+documentRouter.patch('/:id', async (req, res) => {
+  const role = await getRole(req.params.id, req.userId!);
+  if (!role || !canEdit(role)) {
+    res.status(403).json({ error: 'You do not have permission to rename this document' });
+    return;
+  }
+  const parsed = renameSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: 'Invalid title' });
+    return;
+  }
+  await query('UPDATE documents SET title = $1, updated_at = NOW() WHERE id = $2', [
+    parsed.data.title,
+    req.params.id,
+  ]);
   res.status(204).end();
 });
 
