@@ -1048,6 +1048,206 @@ h1 {
   font-size: 0.8rem;
 }
 
+/* ---- Documents sidebar (folders + trash) ---- */
+.docs-page {
+  max-width: 1080px;
+}
+.docs-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+@media (max-width: 760px) {
+  .docs-layout {
+    grid-template-columns: 1fr;
+  }
+}
+.docs-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  position: sticky;
+  top: 1.5rem;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  text-align: left;
+  font-weight: 500;
+  font-size: 0.88rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  width: 100%;
+}
+.nav-item:hover {
+  background: var(--surface);
+  opacity: 1;
+}
+.nav-item.active {
+  background: var(--accent-soft);
+}
+.nav-item.folder .folder-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.folder-count {
+  font-size: 0.72rem;
+}
+.folder-del {
+  opacity: 0;
+  font-size: 1rem;
+  line-height: 1;
+}
+.nav-item.folder:hover .folder-del {
+  opacity: 1;
+}
+.nav-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.9rem;
+  padding: 0 0.65rem;
+}
+.nav-heading {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.nav-add {
+  font-size: 0.78rem;
+}
+.nav-empty {
+  font-size: 0.78rem;
+  padding: 0.25rem 0.65rem;
+}
+.nav-trash {
+  margin-top: 0.9rem;
+}
+.docs-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+.folder-select {
+  font-size: 0.78rem;
+  padding: 0.3rem 0.4rem;
+}
+
+/* ---- Command palette ---- */
+.cmdk-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(29, 29, 27, 0.35);
+  backdrop-filter: blur(2px);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 14vh;
+  z-index: 60;
+}
+.cmdk {
+  width: 100%;
+  max-width: 560px;
+  padding: 0.4rem;
+  box-shadow: var(--shadow-lg);
+}
+.cmdk-input {
+  width: 100%;
+  border: none;
+  font-size: 1rem;
+  padding: 0.75rem 0.85rem;
+  background: transparent;
+}
+.cmdk-input:focus {
+  outline: none;
+  box-shadow: none;
+}
+.cmdk-list {
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0.25rem 0 0;
+  border-top: 1px solid var(--border);
+  max-height: 320px;
+  overflow-y: auto;
+}
+.cmdk-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.cmdk-item.active {
+  background: var(--accent-soft);
+}
+.cmdk-hint {
+  font-size: 0.72rem;
+}
+.cmdk-empty {
+  padding: 0.7rem;
+  font-size: 0.88rem;
+}
+
+/* ---- Mention autocomplete ---- */
+.mention-wrap {
+  position: relative;
+}
+.mention-wrap textarea {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 0.5rem;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 0.86rem;
+}
+.mention-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 0.25rem);
+  z-index: 40;
+  padding: 0.25rem;
+  list-style: none;
+  margin: 0;
+  max-height: 180px;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+.mention-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  padding: 0.4rem 0.55rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.mention-item.active {
+  background: var(--accent-soft);
+}
+.mention-item strong {
+  font-size: 0.84rem;
+}
+.mention-item .muted {
+  font-size: 0.74rem;
+}
+
 /* ---- Modal ---- */
 .modal-backdrop {
   position: fixed;

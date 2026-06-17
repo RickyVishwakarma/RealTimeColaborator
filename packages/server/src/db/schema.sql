@@ -14,10 +14,20 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS folders (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name       VARCHAR(120) NOT NULL,
+  owner_id   UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_folders_owner ON folders(owner_id);
+
 CREATE TABLE IF NOT EXISTS documents (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title            VARCHAR(255) NOT NULL DEFAULT 'Untitled',
   owner_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  folder_id        UUID REFERENCES folders(id) ON DELETE SET NULL,
   -- Latest encoded Yjs state vector + document. Flushed periodically from memory.
   content_snapshot BYTEA,
   is_public        BOOLEAN NOT NULL DEFAULT FALSE,
@@ -31,6 +41,7 @@ CREATE INDEX IF NOT EXISTS idx_documents_deleted_at ON documents(deleted_at);
 
 -- Full-text search: plain-text content extracted from the CRDT on each flush,
 -- plus a generated tsvector over title + content.
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS folder_id UUID REFERENCES folders(id) ON DELETE SET NULL;
 ALTER TABLE documents ADD COLUMN IF NOT EXISTS search_text TEXT NOT NULL DEFAULT '';
 ALTER TABLE documents ADD COLUMN IF NOT EXISTS search_tsv tsvector
   GENERATED ALWAYS AS (

@@ -1,8 +1,10 @@
 import type {
   AuthResponse,
+  Collaborator,
   Comment,
   CommentThread,
   DocumentVersion,
+  Folder,
   Notification,
   SearchResult,
   DocumentDetail,
@@ -78,9 +80,28 @@ export const api = {
 
   me: () => request<{ user: import('@rtc/shared').User }>('/api/auth/me'),
 
-  listDocuments: () => request<{ documents: DocumentSummary[] }>('/api/documents'),
+  listDocuments: (opts: { trash?: boolean; folder?: string } = {}) => {
+    const qs = new URLSearchParams();
+    if (opts.trash) qs.set('trash', '1');
+    if (opts.folder) qs.set('folder', opts.folder);
+    const suffix = qs.toString() ? `?${qs}` : '';
+    return request<{ documents: DocumentSummary[] }>(`/api/documents${suffix}`);
+  },
   search: (q: string) =>
     request<{ results: SearchResult[] }>(`/api/documents/search?q=${encodeURIComponent(q)}`),
+  restoreDocument: (id: string) =>
+    request<void>(`/api/documents/${id}/restore`, { method: 'POST' }),
+  deleteForever: (id: string) =>
+    request<void>(`/api/documents/${id}?permanent=1`, { method: 'DELETE' }),
+  moveDocument: (id: string, folderId: string | null) =>
+    request<void>(`/api/documents/${id}`, { method: 'PATCH', body: { folderId } }),
+  listCollaborators: (id: string) =>
+    request<{ collaborators: Collaborator[] }>(`/api/documents/${id}/collaborators`),
+
+  listFolders: () => request<{ folders: Folder[] }>('/api/folders'),
+  createFolder: (name: string) =>
+    request<{ folder: Folder }>('/api/folders', { method: 'POST', body: { name } }),
+  deleteFolder: (id: string) => request<void>(`/api/folders/${id}`, { method: 'DELETE' }),
   createDocument: (title: string) =>
     request<{ document: DocumentSummary }>('/api/documents', { method: 'POST', body: { title } }),
   getDocument: (id: string) => request<{ document: DocumentDetail }>(`/api/documents/${id}`),
@@ -92,10 +113,10 @@ export const api = {
 
   listComments: (docId: string) =>
     request<{ threads: CommentThread[] }>(`/api/documents/${docId}/comments`),
-  createComment: (docId: string, body: string, threadId?: string) =>
+  createComment: (docId: string, body: string, threadId?: string, mentions?: string[]) =>
     request<{ comment: Comment }>(`/api/documents/${docId}/comments`, {
       method: 'POST',
-      body: { body, threadId: threadId ?? null },
+      body: { body, threadId: threadId ?? null, mentions },
     }),
   resolveThread: (docId: string, commentId: string, resolved: boolean) =>
     request<void>(`/api/documents/${docId}/comments/${commentId}/resolve`, {

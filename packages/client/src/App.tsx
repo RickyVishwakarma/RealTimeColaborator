@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './store';
+import { CommandPalette } from './components/CommandPalette';
 
 // Code-split routes: the heavy editor chunk (TipTap + Yjs) loads only when the
 // editor route is visited, keeping the initial bundle small.
@@ -23,6 +24,7 @@ export function App() {
 
   return (
     <Suspense fallback={<div className="center muted">Loading…</div>}>
+      {status === 'authenticated' && <CommandPalette />}
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route

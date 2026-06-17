@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import type { CommentThread, DocumentRole, User } from '@rtc/shared';
+import type { Collaborator, CommentThread, DocumentRole, User } from '@rtc/shared';
 import { canComment } from '@rtc/shared';
 import { api } from '../api';
+import { MentionInput, resolveMentions } from './MentionInput';
 
 interface Props {
   documentId: string;
@@ -15,6 +16,7 @@ export function CommentsPanel({ documentId, role, user }: Props) {
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyBody, setReplyBody] = useState('');
   const [showResolved, setShowResolved] = useState(false);
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
 
   const refresh = useCallback(async () => {
     const { threads } = await api.listComments(documentId);
@@ -23,22 +25,28 @@ export function CommentsPanel({ documentId, role, user }: Props) {
 
   useEffect(() => {
     void refresh();
-  }, [refresh]);
+    api
+      .listCollaborators(documentId)
+      .then(({ collaborators }) => setCollaborators(collaborators))
+      .catch(() => undefined);
+  }, [refresh, documentId]);
 
   const mayComment = canComment(role);
 
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
-    if (!newComment.trim()) return;
-    await api.createComment(documentId, newComment.trim());
+    const body = newComment.trim();
+    if (!body) return;
+    await api.createComment(documentId, body, undefined, resolveMentions(body, collaborators));
     setNewComment('');
     await refresh();
   }
 
   async function handleReply(threadId: string, e: FormEvent) {
     e.preventDefault();
-    if (!replyBody.trim()) return;
-    await api.createComment(documentId, replyBody.trim(), threadId);
+    const body = replyBody.trim();
+    if (!body) return;
+    await api.createComment(documentId, body, threadId, resolveMentions(body, collaborators));
     setReplyBody('');
     setReplyTo(null);
     await refresh();
@@ -72,11 +80,11 @@ export function CommentsPanel({ documentId, role, user }: Props) {
 
       {mayComment && (
         <form className="comment-compose" onSubmit={handleCreate}>
-          <textarea
+          <MentionInput
             value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Add a comment…"
-            rows={2}
+            onChange={setNewComment}
+            collaborators={collaborators}
+            placeholder="Add a comment…  (@ to mention)"
           />
           <button type="submit" disabled={!newComment.trim()}>
             Comment
@@ -125,11 +133,11 @@ export function CommentsPanel({ documentId, role, user }: Props) {
 
               {replyTo === root.id && (
                 <form className="comment-compose" onSubmit={(e) => handleReply(root.id, e)}>
-                  <textarea
+                  <MentionInput
                     value={replyBody}
-                    onChange={(e) => setReplyBody(e.target.value)}
-                    placeholder="Reply…"
-                    rows={2}
+                    onChange={setReplyBody}
+                    collaborators={collaborators}
+                    placeholder="Reply…  (@ to mention)"
                     autoFocus
                   />
                   <button type="submit" disabled={!replyBody.trim()}>

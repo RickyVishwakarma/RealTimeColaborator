@@ -4,7 +4,7 @@ import { canComment, type Comment, type CommentThread } from '@rtc/shared';
 import { query } from '../db/pool.js';
 import { requireAuth } from '../auth/middleware.js';
 import { getRole } from './permissions.js';
-import { notifyOnComment } from '../notifications/service.js';
+import { notify, notifyOnComment } from '../notifications/service.js';
 
 // Mounted at /api/documents/:id/comments — preserve :id from the parent router.
 export const commentRouter = Router({ mergeParams: true });
@@ -71,6 +71,7 @@ commentRouter.get('/', async (req, res) => {
 const createSchema = z.object({
   body: z.string().min(1).max(10_000),
   threadId: z.string().uuid().nullish(),
+  mentions: z.array(z.string().uuid()).max(20).optional(),
 });
 
 /** Create a comment or reply (requires commenter+ role). */
@@ -86,7 +87,7 @@ commentRouter.post('/', async (req, res) => {
     res.status(400).json({ error: 'Invalid input' });
     return;
   }
-  const { body, threadId } = parsed.data;
+  const { body, threadId, mentions } = parsed.data;
 
   // A reply must target an existing root comment on the same document.
   if (threadId) {
@@ -119,6 +120,24 @@ commentRouter.post('/', async (req, res) => {
     actorName: comment.author.displayName,
     threadId: threadId ?? null,
   });
+
+  // Notify explicitly @-mentioned collaborators who still have access.
+  if (mentions?.length) {
+    const unique = [...new Set(mentions)].filter((uid) => uid !== req.userId);
+    void Promise.all(
+      unique.map(async (uid) => {
+        if (await getRole(documentId, uid)) {
+          await notify({
+            userId: uid,
+            type: 'mention',
+            documentId,
+            actorId: req.userId,
+            body: `${comment.author.displayName} mentioned you in a comment`,
+          });
+        }
+      }),
+    );
+  }
 
   res.status(201).json({ comment });
 });

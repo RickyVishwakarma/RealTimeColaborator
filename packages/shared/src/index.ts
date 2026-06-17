@@ -15,11 +15,18 @@ export interface User {
   createdAt: string;
 }
 
+export interface Folder {
+  id: string;
+  name: string;
+  docCount: number;
+}
+
 export interface DocumentSummary {
   id: string;
   title: string;
   ownerId: string;
   role: DocumentRole;
+  folderId: string | null;
   updatedAt: string;
   createdAt: string;
 }
