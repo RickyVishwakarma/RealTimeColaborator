@@ -3,6 +3,7 @@ import type {
   Comment,
   CommentThread,
   DocumentVersion,
+  Notification,
   SearchResult,
   DocumentDetail,
   DocumentSummary,
@@ -113,4 +114,11 @@ export const api = {
     request<{ content: string }>(`/api/documents/${docId}/versions/${versionId}/preview`),
   restoreVersion: (docId: string, versionId: string) =>
     request<void>(`/api/documents/${docId}/versions/${versionId}/restore`, { method: 'POST' }),
+
+  listNotifications: () =>
+    request<{ notifications: Notification[]; unread: number }>('/api/notifications'),
+  markNotificationRead: (id: string) =>
+    request<void>(`/api/notifications/${id}/read`, { method: 'POST' }),
+  markAllNotificationsRead: () =>
+    request<void>('/api/notifications/read-all', { method: 'POST' }),
 };

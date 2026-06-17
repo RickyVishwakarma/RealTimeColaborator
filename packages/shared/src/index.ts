@@ -57,6 +57,19 @@ export interface CommentThread {
   replies: Comment[];
 }
 
+export type NotificationType = 'shared' | 'comment' | 'mention';
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  documentId: string | null;
+  documentTitle: string | null;
+  actorName: string | null;
+  body: string;
+  readAt: string | null;
+  createdAt: string;
+}
+
 export interface SearchResult {
   id: string;
   title: string;

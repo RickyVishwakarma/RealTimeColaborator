@@ -4,6 +4,7 @@ import { canComment, type Comment, type CommentThread } from '@rtc/shared';
 import { query } from '../db/pool.js';
 import { requireAuth } from '../auth/middleware.js';
 import { getRole } from './permissions.js';
+import { notifyOnComment } from '../notifications/service.js';
 
 // Mounted at /api/documents/:id/comments — preserve :id from the parent router.
 export const commentRouter = Router({ mergeParams: true });
@@ -109,7 +110,17 @@ commentRouter.post('/', async (req, res) => {
     [documentId, threadId ?? null, req.userId, body],
   );
   const result = await query<CommentRow>(`${SELECT_COMMENT} WHERE c.id = $1`, [inserted.rows[0].id]);
-  res.status(201).json({ comment: toComment(result.rows[0]) });
+  const comment = toComment(result.rows[0]);
+
+  // Fire-and-forget: notify owner + thread author (deduped, excluding actor).
+  void notifyOnComment({
+    documentId,
+    actorId: req.userId!,
+    actorName: comment.author.displayName,
+    threadId: threadId ?? null,
+  });
+
+  res.status(201).json({ comment });
 });
 
 /** Toggle resolve state on a thread root (commenter+; only roots resolvable). */

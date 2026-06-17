@@ -3,6 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import type { DocumentSummary, SearchResult } from '@rtc/shared';
 import { api } from '../api';
 import { useAuth } from '../store';
+import { NewDocDialog } from '../components/NewDocDialog';
+import { NotificationBell } from '../components/NotificationBell';
+import type { DocTemplate } from '../lib/templates';
 
 // Escape user content, then turn ts_headline's <<…>> markers into <mark> tags.
 function renderSnippet(snippet: string): string {
@@ -20,6 +23,8 @@ export function DocumentsPage() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[] | null>(null);
+  const [showNewDoc, setShowNewDoc] = useState(false);
+  const [creating, setCreating] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   async function refresh() {
@@ -46,9 +51,15 @@ export function DocumentsPage() {
     }, 250);
   }
 
-  async function handleCreate() {
-    const { document } = await api.createDocument('Untitled');
-    navigate(`/doc/${document.id}`);
+  async function handleCreate(template: DocTemplate) {
+    setCreating(true);
+    try {
+      const { document } = await api.createDocument(template.title);
+      // Pass the template id along so the editor can seed content once.
+      navigate(`/doc/${document.id}`, { state: { templateId: template.id } });
+    } finally {
+      setCreating(false);
+    }
   }
 
   async function handleDelete(id: string) {
@@ -61,6 +72,7 @@ export function DocumentsPage() {
       <header className="topbar">
         <h1>Your documents</h1>
         <div className="row">
+          <NotificationBell />
           <span className="muted">{user?.email}</span>
           <button className="secondary" onClick={() => void logout()}>
             Log out
@@ -75,7 +87,7 @@ export function DocumentsPage() {
           onChange={(e) => handleSearchChange(e.target.value)}
           placeholder="Search documents…"
         />
-        <button onClick={() => void handleCreate()}>+ New document</button>
+        <button onClick={() => setShowNewDoc(true)}>+ New document</button>
       </div>
 
       {results !== null ? (
@@ -120,6 +132,14 @@ export function DocumentsPage() {
             </li>
           ))}
         </ul>
+      )}
+
+      {showNewDoc && (
+        <NewDocDialog
+          busy={creating}
+          onCreate={(t) => void handleCreate(t)}
+          onClose={() => setShowNewDoc(false)}
+        />
       )}
     </div>
   );

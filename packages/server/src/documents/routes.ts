@@ -6,6 +6,7 @@ import { requireAuth } from '../auth/middleware.js';
 import { getRole } from './permissions.js';
 import { commentRouter } from './comments.js';
 import { versionRouter } from './versions.js';
+import { notify } from '../notifications/service.js';
 
 export const documentRouter = Router();
 documentRouter.use(requireAuth);
@@ -188,6 +189,19 @@ documentRouter.post('/:id/share', async (req, res) => {
      ON CONFLICT (document_id, user_id) DO UPDATE SET role = EXCLUDED.role`,
     [req.params.id, target.rows[0].id, parsed.data.role, req.userId],
   );
+
+  const actor = await query<{ display_name: string }>(
+    'SELECT display_name FROM users WHERE id = $1',
+    [req.userId],
+  );
+  await notify({
+    userId: target.rows[0].id,
+    type: 'shared',
+    documentId: req.params.id,
+    actorId: req.userId,
+    body: `${actor.rows[0]?.display_name ?? 'Someone'} shared a document with you as ${parsed.data.role}`,
+  });
+
   res.status(204).end();
 });
 

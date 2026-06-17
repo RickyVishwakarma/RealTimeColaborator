@@ -8,6 +8,7 @@ import { config } from './config.js';
 import { logger } from './logger.js';
 import { authRouter } from './auth/routes.js';
 import { documentRouter } from './documents/routes.js';
+import { notificationRouter } from './notifications/routes.js';
 import { registry, httpRequestDuration } from './metrics.js';
 import { checkReadiness } from './health.js';
 
@@ -48,6 +49,7 @@ export function createApp(): express.Express {
 
   const apiLimiter = rateLimit({ windowMs: 60_000, limit: 300, standardHeaders: true });
   app.use('/api/documents', apiLimiter, documentRouter);
+  app.use('/api/notifications', apiLimiter, notificationRouter);
 
   // Centralized error handler.
   app.use(
