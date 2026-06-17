@@ -17,8 +17,8 @@ export function Logo({ size = 26, withWordmark = true }: Props) {
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        <rect x="4" y="9" width="15" height="15" rx="4.5" fill="currentColor" opacity="0.28" />
-        <rect x="13" y="9" width="15" height="15" rx="4.5" fill="currentColor" />
+        <rect x="3" y="7" width="14" height="14" rx="4" fill="currentColor" opacity="0.35" />
+        <rect x="15" y="11" width="14" height="14" rx="4" fill="currentColor" />
       </svg>
       {withWordmark && <span className="logo-word">Folio</span>}
     </span>
