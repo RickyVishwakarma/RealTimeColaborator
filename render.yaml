@@ -25,7 +25,9 @@ services:
     runtime: node
     plan: free
     region: oregon
-    buildCommand: npm ci && npm run build --workspace=@rtc/shared && npm run build --workspace=@rtc/server
+    # --include=dev: NODE_ENV=production otherwise makes npm skip devDeps
+    # (typescript/tsx), which breaks the build.
+    buildCommand: npm ci --include=dev && npm run build --workspace=@rtc/shared && npm run build --workspace=@rtc/server
     startCommand: npm run start --workspace=@rtc/server
     healthCheckPath: /health
     envVars:
@@ -54,7 +56,7 @@ services:
   - type: web
     name: rtc-client
     runtime: static
-    buildCommand: npm ci && npm run build --workspace=@rtc/shared && npm run build --workspace=@rtc/client
+    buildCommand: npm ci --include=dev && npm run build --workspace=@rtc/shared && npm run build --workspace=@rtc/client
     staticPublishPath: packages/client/dist
     routes:
       - type: rewrite
