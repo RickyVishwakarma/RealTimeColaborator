@@ -6,6 +6,7 @@ import type {
   DocumentVersion,
   Folder,
   Notification,
+  PublicDocument,
   SearchResult,
   DocumentDetail,
   DocumentSummary,
@@ -107,6 +108,12 @@ export const api = {
   getDocument: (id: string) => request<{ document: DocumentDetail }>(`/api/documents/${id}`),
   shareDocument: (id: string, email: string, role: 'editor' | 'commenter' | 'viewer') =>
     request<void>(`/api/documents/${id}/share`, { method: 'POST', body: { email, role } }),
+  publishDocument: (id: string) =>
+    request<{ token: string }>(`/api/documents/${id}/publish`, { method: 'POST' }),
+  unpublishDocument: (id: string) =>
+    request<void>(`/api/documents/${id}/unpublish`, { method: 'POST' }),
+  getPublicDocument: (token: string) =>
+    request<PublicDocument>(`/api/public/${token}`, { retryOnAuth: false }),
   renameDocument: (id: string, title: string) =>
     request<void>(`/api/documents/${id}`, { method: 'PATCH', body: { title } }),
   deleteDocument: (id: string) => request<void>(`/api/documents/${id}`, { method: 'DELETE' }),

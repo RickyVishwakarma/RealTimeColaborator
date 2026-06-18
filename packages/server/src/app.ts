@@ -9,6 +9,7 @@ import { logger } from './logger.js';
 import { authRouter } from './auth/routes.js';
 import { documentRouter } from './documents/routes.js';
 import { folderRouter } from './documents/folders.js';
+import { publicRouter } from './documents/public.js';
 import { notificationRouter } from './notifications/routes.js';
 import { registry, httpRequestDuration } from './metrics.js';
 import { checkReadiness } from './health.js';
@@ -49,6 +50,7 @@ export function createApp(): express.Express {
   app.use('/api/auth', authLimiter, authRouter);
 
   const apiLimiter = rateLimit({ windowMs: 60_000, limit: 300, standardHeaders: true });
+  app.use('/api/public', apiLimiter, publicRouter);
   app.use('/api/documents', apiLimiter, documentRouter);
   app.use('/api/folders', apiLimiter, folderRouter);
   app.use('/api/notifications', apiLimiter, notificationRouter);

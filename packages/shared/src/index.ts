@@ -33,6 +33,14 @@ export interface DocumentSummary {
 
 export interface DocumentDetail extends DocumentSummary {
   isPublic: boolean;
+  publicToken: string | null;
+}
+
+/** Read-only payload for an unauthenticated public document view. */
+export interface PublicDocument {
+  title: string;
+  /** base64-encoded Yjs document snapshot. */
+  snapshot: string | null;
 }
 
 export interface Collaborator {

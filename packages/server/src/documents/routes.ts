@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { Router } from 'express';
 import { z } from 'zod';
 import { canEdit, canManage, type DocumentSummary, type SearchResult } from '@rtc/shared';
@@ -20,6 +21,7 @@ interface DocRow {
   title: string;
   owner_id: string;
   is_public: boolean;
+  public_token: string | null;
   folder_id: string | null;
   created_at: Date;
   updated_at: Date;
@@ -162,11 +164,44 @@ documentRouter.get('/:id', async (req, res) => {
       title: doc.title,
       ownerId: doc.owner_id,
       role,
+      folderId: doc.folder_id,
       isPublic: doc.is_public,
+      publicToken: doc.public_token,
       createdAt: doc.created_at.toISOString(),
       updatedAt: doc.updated_at.toISOString(),
     },
   });
+});
+
+/** Publish a document to a read-only public link (owner only). */
+documentRouter.post('/:id/publish', async (req, res) => {
+  const role = await getRole(req.params.id, req.userId!);
+  if (!role || !canManage(role)) {
+    res.status(403).json({ error: 'Only the owner can publish this document' });
+    return;
+  }
+  // Reuse an existing token so the link is stable across re-publishes.
+  const token = randomBytes(12).toString('hex');
+  const result = await query<{ public_token: string }>(
+    `UPDATE documents
+     SET is_public = TRUE, public_token = COALESCE(public_token, $2), updated_at = NOW()
+     WHERE id = $1 RETURNING public_token`,
+    [req.params.id, token],
+  );
+  res.json({ token: result.rows[0].public_token });
+});
+
+/** Stop sharing publicly (owner only). Keeps the token for easy re-publish. */
+documentRouter.post('/:id/unpublish', async (req, res) => {
+  const role = await getRole(req.params.id, req.userId!);
+  if (!role || !canManage(role)) {
+    res.status(403).json({ error: 'Only the owner can unpublish this document' });
+    return;
+  }
+  await query('UPDATE documents SET is_public = FALSE, updated_at = NOW() WHERE id = $1', [
+    req.params.id,
+  ]);
+  res.status(204).end();
 });
 
 const shareSchema = z.object({

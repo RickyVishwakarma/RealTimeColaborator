@@ -43,6 +43,7 @@ CREATE INDEX IF NOT EXISTS idx_documents_deleted_at ON documents(deleted_at);
 -- plus a generated tsvector over title + content.
 ALTER TABLE documents ADD COLUMN IF NOT EXISTS folder_id UUID REFERENCES folders(id) ON DELETE SET NULL;
 ALTER TABLE documents ADD COLUMN IF NOT EXISTS search_text TEXT NOT NULL DEFAULT '';
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS public_token VARCHAR(32) UNIQUE;
 ALTER TABLE documents ADD COLUMN IF NOT EXISTS search_tsv tsvector
   GENERATED ALWAYS AS (
     to_tsvector('english', coalesce(title, '') || ' ' || coalesce(search_text, ''))

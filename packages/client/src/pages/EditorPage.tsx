@@ -108,7 +108,14 @@ export function EditorPage() {
         )}
       </div>
 
-      {showShare && <ShareDialog documentId={id} onClose={() => setShowShare(false)} />}
+      {showShare && (
+        <ShareDialog
+          documentId={id}
+          initialIsPublic={doc.isPublic}
+          initialPublicToken={doc.publicToken}
+          onClose={() => setShowShare(false)}
+        />
+      )}
       {showHistory && (
         <VersionHistory documentId={id} role={doc.role} onClose={() => setShowHistory(false)} />
       )}
