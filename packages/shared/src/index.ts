@@ -150,6 +150,8 @@ export interface ServerToClientEvents {
   'doc:update': (payload: { documentId: string; update: Uint8Array }) => void;
   'awareness:update': (payload: { documentId: string; update: Uint8Array }) => void;
   'doc:error': (payload: { documentId: string; message: string }) => void;
+  /** A comment was created/resolved/deleted — clients should refetch. */
+  'comments:changed': (payload: { documentId: string }) => void;
 }
 
 export interface JoinAck {

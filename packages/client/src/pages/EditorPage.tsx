@@ -26,6 +26,7 @@ export function EditorPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [editor, setEditor] = useState<Editor | null>(null);
   const [present, setPresent] = useState<PresenceUser[]>([]);
+  const [commentsSignal, setCommentsSignal] = useState(0);
   const renameTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const templateId = (location.state as { templateId?: string } | null)?.templateId;
@@ -33,6 +34,7 @@ export function EditorPage() {
 
   const handleEditorReady = useCallback((e: Editor | null) => setEditor(e), []);
   const handlePresence = useCallback((users: PresenceUser[]) => setPresent(users), []);
+  const handleCommentsChanged = useCallback(() => setCommentsSignal((n) => n + 1), []);
 
   useEffect(() => {
     if (!id) return;
@@ -99,8 +101,11 @@ export function EditorPage() {
           seedHtml={seedHtml}
           onEditorReady={handleEditorReady}
           onPresence={handlePresence}
+          onCommentsChanged={handleCommentsChanged}
         />
-        {showComments && <CommentsPanel documentId={id} role={doc.role} user={user} />}
+        {showComments && (
+          <CommentsPanel documentId={id} role={doc.role} user={user} refreshSignal={commentsSignal} />
+        )}
       </div>
 
       {showShare && <ShareDialog documentId={id} onClose={() => setShowShare(false)} />}

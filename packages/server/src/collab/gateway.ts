@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import type { Server as HttpServer } from 'node:http';
 import { Server, type Socket } from 'socket.io';
 import type {
@@ -11,9 +10,15 @@ import { config } from '../config.js';
 import { logger } from '../logger.js';
 import { verifyAccessToken } from '../auth/tokens.js';
 import { getRole } from '../documents/permissions.js';
-import { redis, redisSub } from '../redis.js';
+import { redisSub } from '../redis.js';
 import { acquireDoc, releaseDoc, applyUpdate, encodeState } from './docManager.js';
-import { setIo } from './io.js';
+import {
+  setIo,
+  publishRelay,
+  relayChannel,
+  SERVER_ID,
+  type RelayMessage,
+} from './io.js';
 import { wsConnections } from '../metrics.js';
 
 interface SocketData {
@@ -25,25 +30,13 @@ interface SocketData {
 
 type CollabSocket = Socket<ClientToServerEvents, ServerToClientEvents, never, SocketData>;
 
-// Unique per server process — lets us ignore our own Redis echoes.
-const SERVER_ID = randomUUID();
-const channel = (documentId: string) => `doc:${documentId}:relay`;
-
-interface RelayMessage {
-  origin: string;
-  documentId: string;
-  kind: 'doc' | 'awareness';
-  /** base64-encoded binary payload */
-  payload: string;
-}
-
 export function attachCollabGateway(httpServer: HttpServer): Server {
   const io = new Server<ClientToServerEvents, ServerToClientEvents, never, SocketData>(httpServer, {
     cors: { origin: config.CLIENT_ORIGIN, credentials: true },
     maxHttpBufferSize: 5 * 1024 * 1024, // 5MB cap per message
   });
 
-  // Expose the server so REST routes (e.g. version restore) can broadcast.
+  // Expose the server so REST routes (version restore, live comments) can broadcast.
   setIo(io as unknown as import('socket.io').Server);
 
   // --- Authentication handshake ---
@@ -61,26 +54,23 @@ export function attachCollabGateway(httpServer: HttpServer): Server {
     }
   });
 
-  // --- Cross-server relay: re-broadcast updates from other server instances ---
+  // --- Cross-server relay: re-broadcast events from other server instances ---
   redisSub.on('messageBuffer', (channelBuf: Buffer, messageBuf: Buffer) => {
     const ch = channelBuf.toString();
     if (!ch.startsWith('doc:') || !ch.endsWith(':relay')) return;
     const msg = JSON.parse(messageBuf.toString()) as RelayMessage;
     if (msg.origin === SERVER_ID) return; // ignore our own publishes
-    const update = new Uint8Array(Buffer.from(msg.payload, 'base64'));
+    if (msg.kind === 'comments') {
+      io.to(msg.documentId).emit('comments:changed', { documentId: msg.documentId });
+      return;
+    }
+    const update = new Uint8Array(Buffer.from(msg.payload ?? '', 'base64'));
     const event = msg.kind === 'doc' ? 'doc:update' : 'awareness:update';
     io.to(msg.documentId).emit(event, { documentId: msg.documentId, update });
   });
 
-  async function publishRelay(documentId: string, kind: 'doc' | 'awareness', payload: Uint8Array) {
-    const message: RelayMessage = {
-      origin: SERVER_ID,
-      documentId,
-      kind,
-      payload: Buffer.from(payload).toString('base64'),
-    };
-    await redis.publish(channel(documentId), JSON.stringify(message));
-  }
+  const relayBinary = (documentId: string, kind: 'doc' | 'awareness', payload: Uint8Array) =>
+    publishRelay(documentId, kind, Buffer.from(payload).toString('base64'));
 
   io.on('connection', (socket: CollabSocket) => {
     wsConnections.inc();
@@ -99,7 +89,7 @@ export function attachCollabGateway(httpServer: HttpServer): Server {
         await socket.join(documentId);
 
         // Subscribe this server to the document's relay channel (idempotent).
-        await redisSub.subscribe(channel(documentId));
+        await redisSub.subscribe(relayChannel(documentId));
 
         const state = encodeState(documentId);
         if (state) socket.emit('doc:sync', { documentId, state });
@@ -123,14 +113,14 @@ export function attachCollabGateway(httpServer: HttpServer): Server {
       // Broadcast to everyone else in the room on this server...
       socket.to(documentId).emit('doc:update', { documentId, update: bytes });
       // ...and to clients connected to other server instances.
-      await publishRelay(documentId, 'doc', bytes);
+      await relayBinary(documentId, 'doc', bytes);
     });
 
     socket.on('awareness:update', async ({ documentId, update }) => {
       if (!socket.data.roles.has(documentId)) return;
       const bytes = update instanceof Uint8Array ? update : new Uint8Array(update);
       socket.to(documentId).emit('awareness:update', { documentId, update: bytes });
-      await publishRelay(documentId, 'awareness', bytes);
+      await relayBinary(documentId, 'awareness', bytes);
     });
 
     socket.on('doc:leave', async ({ documentId }) => {

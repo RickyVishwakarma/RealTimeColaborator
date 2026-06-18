@@ -5,6 +5,7 @@ import { query } from '../db/pool.js';
 import { requireAuth } from '../auth/middleware.js';
 import { getRole } from './permissions.js';
 import { notify, notifyOnComment } from '../notifications/service.js';
+import { broadcastCommentsChanged } from '../collab/io.js';
 
 // Mounted at /api/documents/:id/comments — preserve :id from the parent router.
 export const commentRouter = Router({ mergeParams: true });
@@ -139,6 +140,7 @@ commentRouter.post('/', async (req, res) => {
     );
   }
 
+  broadcastCommentsChanged(documentId);
   res.status(201).json({ comment });
 });
 
@@ -165,6 +167,7 @@ commentRouter.post('/:commentId/resolve', async (req, res) => {
     res.status(404).json({ error: 'Thread not found' });
     return;
   }
+  broadcastCommentsChanged(documentId);
   res.status(204).end();
 });
 
@@ -192,5 +195,6 @@ commentRouter.delete('/:commentId', async (req, res) => {
   await query('DELETE FROM comments WHERE id = $1', [
     (req.params as Record<string, string>).commentId,
   ]);
+  broadcastCommentsChanged(documentId);
   res.status(204).end();
 });

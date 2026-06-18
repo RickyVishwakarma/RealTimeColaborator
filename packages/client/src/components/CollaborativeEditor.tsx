@@ -30,6 +30,8 @@ interface Props {
   onEditorReady?: (editor: Editor | null) => void;
   /** Receives the live list of present collaborators (from awareness). */
   onPresence?: (users: PresenceUser[]) => void;
+  /** Fires when another client changes comments (live refetch signal). */
+  onCommentsChanged?: () => void;
 }
 
 export function CollaborativeEditor({
@@ -39,6 +41,7 @@ export function CollaborativeEditor({
   seedHtml,
   onEditorReady,
   onPresence,
+  onCommentsChanged,
 }: Props) {
   const ydoc = useMemo(() => new Y.Doc(), [documentId]);
   const providerRef = useRef<SocketProvider | null>(null);
@@ -53,6 +56,7 @@ export function CollaborativeEditor({
       ydoc,
       getAccessToken() ?? '',
       setStatus,
+      onCommentsChanged,
     );
   }
 

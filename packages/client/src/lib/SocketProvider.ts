@@ -27,6 +27,7 @@ export class SocketProvider {
     private readonly doc: Y.Doc,
     token: string,
     private readonly onStatus?: (status: 'connecting' | 'connected' | 'disconnected') => void,
+    private readonly onCommentsChanged?: () => void,
   ) {
     this.awareness = new Awareness(doc);
 
@@ -62,6 +63,10 @@ export class SocketProvider {
 
     this.socket.on('doc:update', ({ update }) => {
       Y.applyUpdate(this.doc, new Uint8Array(update), this);
+    });
+
+    this.socket.on('comments:changed', () => {
+      this.onCommentsChanged?.();
     });
 
     this.socket.on('awareness:update', ({ update }) => {

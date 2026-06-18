@@ -8,9 +8,11 @@ interface Props {
   documentId: string;
   role: DocumentRole;
   user: User;
+  /** Increments when a live `comments:changed` event arrives — triggers refetch. */
+  refreshSignal?: number;
 }
 
-export function CommentsPanel({ documentId, role, user }: Props) {
+export function CommentsPanel({ documentId, role, user, refreshSignal }: Props) {
   const [threads, setThreads] = useState<CommentThread[]>([]);
   const [newComment, setNewComment] = useState('');
   const [replyTo, setReplyTo] = useState<string | null>(null);
@@ -30,6 +32,11 @@ export function CommentsPanel({ documentId, role, user }: Props) {
       .then(({ collaborators }) => setCollaborators(collaborators))
       .catch(() => undefined);
   }, [refresh, documentId]);
+
+  // Live refetch when another client changes comments.
+  useEffect(() => {
+    if (refreshSignal) void refresh();
+  }, [refreshSignal, refresh]);
 
   const mayComment = canComment(role);
 
