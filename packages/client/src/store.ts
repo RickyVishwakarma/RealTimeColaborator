@@ -9,6 +9,7 @@ interface AuthState {
   signup: (email: string, password: string, displayName: string) => Promise<void>;
   logout: () => Promise<void>;
   bootstrap: () => Promise<void>;
+  setUser: (user: User) => void;
 }
 
 export const useAuth = create<AuthState>((set) => ({
@@ -26,6 +27,8 @@ export const useAuth = create<AuthState>((set) => ({
     setAccessToken(res.accessToken);
     set({ user: res.user, status: 'authenticated' });
   },
+
+  setUser: (user) => set({ user }),
 
   logout: async () => {
     await api.logout().catch(() => undefined);

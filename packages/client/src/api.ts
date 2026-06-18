@@ -80,6 +80,18 @@ export const api = {
   logout: () => request<void>('/api/auth/logout', { method: 'POST' }),
 
   me: () => request<{ user: import('@rtc/shared').User }>('/api/auth/me'),
+  updateProfile: (displayName: string) =>
+    request<{ user: import('@rtc/shared').User }>('/api/auth/me', {
+      method: 'PATCH',
+      body: { displayName },
+    }),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    request<void>('/api/auth/password', {
+      method: 'POST',
+      body: { currentPassword, newPassword },
+    }),
+  sendDigest: () =>
+    request<{ count: number; sent: boolean }>('/api/notifications/digest', { method: 'POST' }),
 
   listDocuments: (opts: { trash?: boolean; folder?: string } = {}) => {
     const qs = new URLSearchParams();

@@ -12,6 +12,7 @@ import { ShareDialog } from '../components/ShareDialog';
 import { ExportMenu } from '../components/ExportMenu';
 import { PresenceAvatars } from '../components/PresenceAvatars';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { DocumentOutline } from '../components/DocumentOutline';
 import { templateById } from '../lib/templates';
 
 export function EditorPage() {
@@ -27,6 +28,7 @@ export function EditorPage() {
   const [editor, setEditor] = useState<Editor | null>(null);
   const [present, setPresent] = useState<PresenceUser[]>([]);
   const [commentsSignal, setCommentsSignal] = useState(0);
+  const [showOutline, setShowOutline] = useState(false);
   const renameTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const templateId = (location.state as { templateId?: string } | null)?.templateId;
@@ -84,6 +86,14 @@ export function EditorPage() {
           <button className="secondary" onClick={() => setShowComments((v) => !v)}>
             {showComments ? 'Hide comments' : 'Comments'}
           </button>
+          <div className="outline-wrap">
+            <button className="secondary" onClick={() => setShowOutline((v) => !v)}>
+              Outline
+            </button>
+            {showOutline && (
+              <DocumentOutline editor={editor} onClose={() => setShowOutline(false)} />
+            )}
+          </div>
           <button className="secondary" onClick={() => setShowHistory(true)}>
             History
           </button>

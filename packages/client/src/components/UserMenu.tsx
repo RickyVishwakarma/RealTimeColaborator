@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { User } from '@rtc/shared';
 import { useTheme } from '../lib/theme';
 import { colorForUser } from '../config';
+import { SettingsDialog } from './SettingsDialog';
 
 interface Props {
   user: User;
@@ -15,6 +16,7 @@ function initials(name: string): string {
 
 export function UserMenu({ user, onLogout }: Props) {
   const [open, setOpen] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const { theme, toggle } = useTheme();
   const ref = useRef<HTMLDivElement>(null);
 
@@ -48,11 +50,22 @@ export function UserMenu({ user, onLogout }: Props) {
           <button className="menu-item menu-toggle" onClick={toggle}>
             <span>{theme === 'dark' ? '☀️ Light mode' : '🌙 Dark mode'}</span>
           </button>
+          <button
+            className="menu-item"
+            onClick={() => {
+              setShowSettings(true);
+              setOpen(false);
+            }}
+          >
+            Settings
+          </button>
           <button className="menu-item" onClick={onLogout}>
             Log out
           </button>
         </div>
       )}
+
+      {showSettings && <SettingsDialog user={user} onClose={() => setShowSettings(false)} />}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import type { Notification } from '@rtc/shared';
 import { query } from '../db/pool.js';
 import { requireAuth } from '../auth/middleware.js';
+import { sendDigest } from './digest.js';
 
 export const notificationRouter = Router();
 notificationRouter.use(requireAuth);
@@ -68,4 +69,10 @@ notificationRouter.post('/read-all', async (req, res) => {
     req.userId,
   ]);
   res.status(204).end();
+});
+
+/** Email the current user a digest of their unread notifications. */
+notificationRouter.post('/digest', async (req, res) => {
+  const result = await sendDigest(req.userId!);
+  res.json(result);
 });

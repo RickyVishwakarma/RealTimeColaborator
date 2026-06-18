@@ -137,3 +137,45 @@ authRouter.get('/me', requireAuth, async (req, res) => {
   }
   res.json({ user: toUser(row) });
 });
+
+const profileSchema = z.object({ displayName: z.string().min(1).max(255) });
+
+/** Update the current user's profile (display name). */
+authRouter.patch('/me', requireAuth, async (req, res) => {
+  const parsed = profileSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: 'Invalid display name' });
+    return;
+  }
+  const result = await query<UserRow>(
+    'UPDATE users SET display_name = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+    [parsed.data.displayName, req.userId],
+  );
+  res.json({ user: toUser(result.rows[0]) });
+});
+
+const passwordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8).max(128),
+});
+
+/** Change the current user's password (requires the current one). */
+authRouter.post('/password', requireAuth, async (req, res) => {
+  const parsed = passwordSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: 'New password must be at least 8 characters' });
+    return;
+  }
+  const result = await query<UserRow>('SELECT * FROM users WHERE id = $1', [req.userId]);
+  const row = result.rows[0];
+  if (!row || !(await bcrypt.compare(parsed.data.currentPassword, row.password_hash))) {
+    res.status(401).json({ error: 'Current password is incorrect' });
+    return;
+  }
+  const hash = await bcrypt.hash(parsed.data.newPassword, 12);
+  await query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2', [
+    hash,
+    req.userId,
+  ]);
+  res.status(204).end();
+});

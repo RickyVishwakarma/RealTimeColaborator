@@ -61,6 +61,19 @@ export function NotificationBell() {
     setItems((list) => list.map((i) => ({ ...i, readAt: i.readAt ?? new Date().toISOString() })));
   }
 
+  const [digestMsg, setDigestMsg] = useState<string | null>(null);
+  async function handleDigest() {
+    const { count, sent } = await api.sendDigest();
+    setDigestMsg(
+      count === 0
+        ? 'Nothing unread to digest'
+        : sent
+          ? `Emailed a digest of ${count} item(s)`
+          : `Digest of ${count} item(s) generated (email not configured)`,
+    );
+    setTimeout(() => setDigestMsg(null), 4000);
+  }
+
   return (
     <div className="notif-bell" ref={ref}>
       <button className="secondary bell-btn" onClick={() => void handleOpen()} title="Notifications">
@@ -97,6 +110,12 @@ export function NotificationBell() {
               ))}
             </ul>
           )}
+          <div className="notif-footer">
+            <button className="link" onClick={() => void handleDigest()}>
+              ✉ Email me a digest
+            </button>
+            {digestMsg && <span className="muted notif-digest-msg">{digestMsg}</span>}
+          </div>
         </div>
       )}
     </div>
