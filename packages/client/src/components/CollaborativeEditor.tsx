@@ -5,6 +5,12 @@ import StarterKit from '@tiptap/starter-kit';
 import Collaboration from '@tiptap/extension-collaboration';
 import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
 import Placeholder from '@tiptap/extension-placeholder';
+import Image from '@tiptap/extension-image';
+import Table from '@tiptap/extension-table';
+import TableRow from '@tiptap/extension-table-row';
+import TableHeader from '@tiptap/extension-table-header';
+import TableCell from '@tiptap/extension-table-cell';
+import { SlashCommand } from '../lib/slashCommand';
 import type { User } from '@rtc/shared';
 import { canEdit, type DocumentRole } from '@rtc/shared';
 import { SocketProvider } from '../lib/SocketProvider';
@@ -76,7 +82,13 @@ export function CollaborativeEditor({
         // History is provided by the Collaboration extension; disable StarterKit's.
         StarterKit.configure({ history: false }),
         Collaboration.configure({ document: ydoc }),
-        Placeholder.configure({ placeholder: 'Start writing…' }),
+        Placeholder.configure({ placeholder: 'Start writing…  (press / for commands)' }),
+        Image.configure({ allowBase64: true }),
+        Table.configure({ resizable: true }),
+        TableRow,
+        TableHeader,
+        TableCell,
+        SlashCommand,
         CollaborationCursor.configure({
           provider: providerRef.current,
           user: { name: user.displayName, color: colorForUser(user.id) },

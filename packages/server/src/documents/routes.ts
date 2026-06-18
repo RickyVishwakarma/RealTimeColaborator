@@ -101,6 +101,47 @@ documentRouter.post('/', async (req, res) => {
   }
 });
 
+/** Duplicate a document the user can access into a new doc they own. */
+documentRouter.post('/:id/duplicate', async (req, res) => {
+  const role = await getRole(req.params.id, req.userId!);
+  if (!role) {
+    res.status(404).json({ error: 'Document not found' });
+    return;
+  }
+  const source = await query<{ title: string; content_snapshot: Buffer | null; search_text: string }>(
+    'SELECT title, content_snapshot, search_text FROM documents WHERE id = $1 AND deleted_at IS NULL',
+    [req.params.id],
+  );
+  if (!source.rows[0]) {
+    res.status(404).json({ error: 'Document not found' });
+    return;
+  }
+  const src = source.rows[0];
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const docResult = await client.query<DocRow>(
+      `INSERT INTO documents (title, owner_id, content_snapshot, search_text)
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [`Copy of ${src.title}`.slice(0, 255), req.userId, src.content_snapshot, src.search_text],
+    );
+    const doc = docResult.rows[0];
+    await client.query(
+      `INSERT INTO document_permissions (document_id, user_id, role, granted_by_id)
+       VALUES ($1, $2, 'owner', $2)`,
+      [doc.id, req.userId],
+    );
+    await client.query('COMMIT');
+    res.status(201).json({ document: toSummary({ ...doc, role: 'owner' }) });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+});
+
 /**
  * Full-text search across documents the user can access. Ranks tsvector
  * matches and also catches fuzzy title matches via trigram similarity.

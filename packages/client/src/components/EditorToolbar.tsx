@@ -101,6 +101,28 @@ export function EditorToolbar({ editor }: Props) {
 
       <button
         className="tb-btn"
+        onClick={() => {
+          const url = window.prompt('Image URL');
+          if (url) editor.chain().focus().setImage({ src: url }).run();
+        }}
+        title="Insert image"
+      >
+        🖼
+      </button>
+      <button
+        className="tb-btn"
+        onClick={() =>
+          editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+        }
+        title="Insert table"
+      >
+        ▦
+      </button>
+
+      <span className="tb-sep" />
+
+      <button
+        className="tb-btn"
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editor.can().undo()}
         title="Undo (Ctrl+Z)"

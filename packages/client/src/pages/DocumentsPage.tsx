@@ -97,6 +97,10 @@ export function DocumentsPage() {
     await api.moveDocument(id, folderId);
     await Promise.all([refresh(), loadFolders()]);
   }
+  async function handleDuplicate(id: string) {
+    await api.duplicateDocument(id);
+    await refresh();
+  }
 
   async function handleNewFolder() {
     const name = prompt('Folder name')?.trim();
@@ -233,26 +237,35 @@ export function DocumentsPage() {
                       </button>
                     </>
                   ) : (
-                    doc.role === 'owner' && (
-                      <>
-                        <select
-                          className="folder-select"
-                          value={doc.folderId ?? ''}
-                          title="Move to folder"
-                          onChange={(e) => void handleMove(doc.id, e.target.value || null)}
-                        >
-                          <option value="">No folder</option>
-                          {folders.map((f) => (
-                            <option key={f.id} value={f.id}>
-                              {f.name}
-                            </option>
-                          ))}
-                        </select>
-                        <button className="danger" onClick={() => void handleDelete(doc.id)}>
-                          Delete
-                        </button>
-                      </>
-                    )
+                    <>
+                      <button
+                        className="link"
+                        title="Duplicate"
+                        onClick={() => void handleDuplicate(doc.id)}
+                      >
+                        Duplicate
+                      </button>
+                      {doc.role === 'owner' && (
+                        <>
+                          <select
+                            className="folder-select"
+                            value={doc.folderId ?? ''}
+                            title="Move to folder"
+                            onChange={(e) => void handleMove(doc.id, e.target.value || null)}
+                          >
+                            <option value="">No folder</option>
+                            {folders.map((f) => (
+                              <option key={f.id} value={f.id}>
+                                {f.name}
+                              </option>
+                            ))}
+                          </select>
+                          <button className="danger" onClick={() => void handleDelete(doc.id)}>
+                            Delete
+                          </button>
+                        </>
+                      )}
+                    </>
                   )}
                 </li>
               ))}

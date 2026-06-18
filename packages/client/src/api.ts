@@ -117,6 +117,8 @@ export const api = {
   renameDocument: (id: string, title: string) =>
     request<void>(`/api/documents/${id}`, { method: 'PATCH', body: { title } }),
   deleteDocument: (id: string) => request<void>(`/api/documents/${id}`, { method: 'DELETE' }),
+  duplicateDocument: (id: string) =>
+    request<{ document: DocumentSummary }>(`/api/documents/${id}/duplicate`, { method: 'POST' }),
 
   listComments: (docId: string) =>
     request<{ threads: CommentThread[] }>(`/api/documents/${docId}/comments`),
