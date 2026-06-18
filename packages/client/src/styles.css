@@ -1,27 +1,29 @@
 :root {
-  /* Minimal, warm-neutral palette */
-  --bg: #f7f7f5;
+  /* Excalidraw-inspired: violet accent, soft islands, hand-drawn accents */
+  --bg: #fbfbfe;
   --surface: #ffffff;
-  --surface-2: #fafafa;
-  --border: #ebeae6;
-  --border-strong: #dedcd6;
-  --text: #1d1d1b;
-  --muted: #8a8a82;
-  --accent: #3a3a38;
+  --surface-2: #f4f4f8;
+  --border: #e6e6ef;
+  --border-strong: #d6d6e3;
+  --text: #1b1b1f;
+  --muted: #868699;
+  --accent: #6965db;
   --accent-text: #ffffff;
-  --accent-soft: #f0efec;
-  --danger: #c4554d;
-  --success: #4a8f5b;
-  --mark: #fbeeb0;
+  --accent-soft: #ecebff;
+  --danger: #e03131;
+  --success: #2f9e44;
+  --mark: #ffec99;
+  --dot: #e7e7f2;
   color-scheme: light;
 
-  --radius: 10px;
-  --radius-sm: 7px;
-  --shadow: 0 1px 2px rgba(20, 20, 18, 0.04), 0 1px 3px rgba(20, 20, 18, 0.04);
-  --shadow-lg: 0 4px 16px rgba(20, 20, 18, 0.08), 0 1px 3px rgba(20, 20, 18, 0.05);
+  --radius: 12px;
+  --radius-sm: 9px;
+  --shadow: 0 1px 4px rgba(31, 30, 56, 0.07), 0 0 0 1px rgba(31, 30, 56, 0.03);
+  --shadow-lg: 0 8px 28px rgba(31, 30, 56, 0.16), 0 2px 6px rgba(31, 30, 56, 0.06);
 
-  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+  /* Nunito for UI, Caveat (hand-drawn) for branding & headings */
+  --font-sans: 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: 'Caveat', 'Comic Sans MS', cursive;
 
   font-family: var(--font-sans);
   color: var(--text);
@@ -30,19 +32,20 @@
 }
 
 :root[data-theme='dark'] {
-  --bg: #1a1a18;
-  --surface: #232320;
-  --surface-2: #2a2a27;
-  --border: #34332f;
-  --border-strong: #45443f;
-  --text: #ececea;
-  --muted: #9b9a92;
-  --accent: #ececea;
-  --accent-text: #1a1a18;
-  --accent-soft: #2f2e2b;
-  --danger: #e0857f;
-  --success: #6cbf83;
-  --mark: #6b5d1f;
+  --bg: #121212;
+  --surface: #1f1f24;
+  --surface-2: #28282f;
+  --border: #34343d;
+  --border-strong: #45454f;
+  --text: #e3e3e8;
+  --muted: #9a9aa8;
+  --accent: #8b87f5;
+  --accent-text: #15151a;
+  --accent-soft: #2c2b40;
+  --danger: #ff8787;
+  --success: #69db7c;
+  --mark: #5b5018;
+  --dot: #26262e;
   color-scheme: dark;
 }
 
@@ -61,7 +64,10 @@ a:hover {
 
 body {
   margin: 0;
-  background: var(--bg);
+  background-color: var(--bg);
+  /* Excalidraw-style dotted canvas */
+  background-image: radial-gradient(var(--dot) 1.4px, transparent 1.4px);
+  background-size: 24px 24px;
   color: var(--text);
   font-size: 15px;
   line-height: 1.5;
@@ -91,20 +97,21 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--text);
+  color: var(--accent);
 }
 .logo svg {
   display: block;
 }
 .logo-word {
   font-family: var(--font-serif);
-  font-weight: 500;
-  font-size: 1.25rem;
-  letter-spacing: -0.01em;
+  font-weight: 700;
+  font-size: 1.7rem;
+  letter-spacing: 0;
+  color: var(--text);
 }
 
 .page-title {
-  font-size: 1.35rem;
+  font-size: 1.9rem;
   margin: 0;
 }
 
@@ -115,8 +122,8 @@ body {
   grid-template-columns: 1.1fr 1fr;
 }
 .auth-brand {
-  background: #1d1d1b;
-  color: #f3f2ee;
+  background: linear-gradient(160deg, #6965db 0%, #5b57c7 60%, #4a47a8 100%);
+  color: #f3f2ff;
   padding: 3rem;
   display: flex;
   flex-direction: column;
@@ -125,14 +132,14 @@ body {
 }
 .auth-brand .logo,
 .auth-brand .logo-word {
-  color: #f3f2ee;
+  color: #ffffff;
 }
 .auth-headline {
   font-family: var(--font-serif);
-  font-weight: 500;
-  font-size: 2.4rem;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  font-size: 3rem;
+  line-height: 1.05;
+  letter-spacing: 0;
   margin: 0 0 1rem;
 }
 .auth-sub {
@@ -332,9 +339,9 @@ button.danger:hover {
 
 h1 {
   font-family: var(--font-serif);
-  font-weight: 500;
-  font-size: 1.5rem;
-  letter-spacing: -0.01em;
+  font-weight: 700;
+  font-size: 2rem;
+  letter-spacing: 0;
   margin: 0;
 }
 
@@ -510,6 +517,9 @@ h1 {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  background-color: var(--surface);
+  background-image: radial-gradient(var(--dot) 1.4px, transparent 1.4px);
+  background-size: 24px 24px;
 }
 
 .editor-bar {
@@ -556,20 +566,21 @@ h1 {
 .prose-editor h2,
 .prose-editor h3 {
   font-family: var(--font-serif);
-  font-weight: 500;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0;
+  color: var(--accent);
 }
 .prose-editor h1 {
-  font-size: 1.85rem;
+  font-size: 2.5rem;
   margin-top: 1.6rem;
 }
 .prose-editor h2 {
-  font-size: 1.45rem;
+  font-size: 2rem;
   margin-top: 1.4rem;
 }
 .prose-editor h3 {
-  font-size: 1.18rem;
+  font-size: 1.6rem;
   margin-top: 1.2rem;
 }
 .prose-editor ul,
