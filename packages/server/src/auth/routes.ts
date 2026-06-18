@@ -31,10 +31,13 @@ function toUser(row: UserRow): User {
 }
 
 function setRefreshCookie(res: import('express').Response, token: string): void {
+  const isProd = config.NODE_ENV === 'production';
   res.cookie(REFRESH_COOKIE, token, {
     httpOnly: true,
-    secure: config.NODE_ENV === 'production',
-    sameSite: 'lax',
+    // In production the client and server live on different origins, so the
+    // refresh cookie must be SameSite=None (which requires Secure).
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
     maxAge: config.JWT_REFRESH_TTL * 1000,
     path: '/api/auth',
   });

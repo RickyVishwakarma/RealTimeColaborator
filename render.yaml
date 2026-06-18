@@ -1,0 +1,70 @@
+# Render Blueprint — provisions the whole stack from this repo.
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Creates: PostgreSQL, Redis (Key Value), the Node server (web service with
+# WebSockets), and the static client. After the first deploy you must set three
+# cross-service URLs (marked `sync: false`) in the dashboard — see DEPLOY.md.
+
+databases:
+  - name: rtc-postgres
+    plan: free
+    databaseName: rtc
+    user: rtc
+
+services:
+  # ---- Redis (presence relay + pub/sub) ----
+  - type: redis
+    name: rtc-redis
+    plan: free
+    ipAllowList: [] # internal only
+    maxmemoryPolicy: noeviction
+
+  # ---- API + WebSocket server ----
+  - type: web
+    name: rtc-server
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm ci && npm run build --workspace=@rtc/shared && npm run build --workspace=@rtc/server
+    startCommand: npm run start --workspace=@rtc/server
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: '20'
+      - key: NODE_ENV
+        value: production
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: rtc-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: rtc-redis
+          property: connectionString
+      # Set to the client's URL after first deploy (e.g. https://rtc-client.onrender.com)
+      - key: CLIENT_ORIGIN
+        sync: false
+
+  # ---- Static client (Vite SPA) ----
+  - type: web
+    name: rtc-client
+    runtime: static
+    buildCommand: npm ci && npm run build --workspace=@rtc/shared && npm run build --workspace=@rtc/client
+    staticPublishPath: packages/client/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_VERSION
+        value: '20'
+      # Set both to the server's URL after first deploy (e.g. https://rtc-server.onrender.com)
+      - key: VITE_API_URL
+        sync: false
+      - key: VITE_WS_URL
+        sync: false

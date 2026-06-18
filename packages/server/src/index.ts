@@ -1,18 +1,31 @@
 import { createServer } from 'node:http';
-import { config } from './config.js';
+import { config, isProd } from './config.js';
 import { logger } from './logger.js';
 import { createApp } from './app.js';
 import { attachCollabGateway } from './collab/gateway.js';
 import { flushAll } from './collab/docManager.js';
 import { pool } from './db/pool.js';
 import { redis, redisSub } from './redis.js';
+import { runMigrations } from './db/runMigrations.js';
 
 const app = createApp();
 const httpServer = createServer(app);
 const io = attachCollabGateway(httpServer);
 
-httpServer.listen(config.PORT, () => {
-  logger.info(`RTC server listening on :${config.PORT} (${config.NODE_ENV})`);
+async function start(): Promise<void> {
+  // Self-migrate on boot in production (idempotent schema) so hosts like Render
+  // need no separate migration step. Opt in elsewhere via RUN_MIGRATIONS=true.
+  if (isProd || process.env.RUN_MIGRATIONS === 'true') {
+    await runMigrations();
+  }
+  httpServer.listen(config.PORT, () => {
+    logger.info(`RTC server listening on :${config.PORT} (${config.NODE_ENV})`);
+  });
+}
+
+start().catch((err) => {
+  logger.fatal({ err }, 'Failed to start server');
+  process.exit(1);
 });
 
 async function shutdown(signal: string): Promise<void> {

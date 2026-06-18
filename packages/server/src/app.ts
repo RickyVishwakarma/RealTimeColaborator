@@ -17,6 +17,10 @@ import { checkReadiness } from './health.js';
 export function createApp(): express.Express {
   const app = express();
 
+  // Behind Render/Heroku/k8s ingress: trust the first proxy so Secure cookies
+  // and express-rate-limit see the real client protocol/IP.
+  if (config.NODE_ENV === 'production') app.set('trust proxy', 1);
+
   app.use(helmet());
   app.use(pinoHttp({ logger }));
   app.use(cors({ origin: config.CLIENT_ORIGIN, credentials: true }));
