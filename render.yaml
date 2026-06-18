@@ -25,6 +25,8 @@ services:
     runtime: node
     plan: free
     region: oregon
+    # Deploys are gated by CI (see .github/workflows/ci.yml) via a Deploy Hook.
+    autoDeploy: false
     # --include=dev: NODE_ENV=production otherwise makes npm skip devDeps
     # (typescript/tsx), which breaks the build.
     buildCommand: npm ci --include=dev && npm run build --workspace=@rtc/shared && npm run build --workspace=@rtc/server
@@ -56,6 +58,7 @@ services:
   - type: web
     name: rtc-client
     runtime: static
+    autoDeploy: false
     buildCommand: npm ci --include=dev && npm run build --workspace=@rtc/shared && npm run build --workspace=@rtc/client
     staticPublishPath: packages/client/dist
     routes:

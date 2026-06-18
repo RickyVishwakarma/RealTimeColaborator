@@ -81,3 +81,25 @@ jobs:
         run: docker build -f packages/server/Dockerfile -t rtc-server:${{ github.sha }} .
       - name: Build client image
         run: docker build -f packages/client/Dockerfile -t rtc-client:${{ github.sha }} .
+
+  # Deploy gate: only trigger Render after CI passes on main. Render auto-deploy
+  # is disabled (autoDeploy: false), so this is the single path to production.
+  deploy:
+    needs: [build-and-test, docker]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Trigger Render deploy (server)
+        run: |
+          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK_SERVER }}" ]; then
+            echo "RENDER_DEPLOY_HOOK_SERVER not set — skipping server deploy."
+          else
+            curl -fsS "${{ secrets.RENDER_DEPLOY_HOOK_SERVER }}" && echo "Server deploy triggered."
+          fi
+      - name: Trigger Render deploy (client)
+        run: |
+          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK_CLIENT }}" ]; then
+            echo "RENDER_DEPLOY_HOOK_CLIENT not set — skipping client deploy."
+          else
+            curl -fsS "${{ secrets.RENDER_DEPLOY_HOOK_CLIENT }}" && echo "Client deploy triggered."
+          fi
