@@ -145,7 +145,7 @@ body {
 .auth-sub {
   font-size: 1.02rem;
   line-height: 1.6;
-  color: #b9b7b0;
+  color: rgba(255, 255, 255, 0.85);
   margin: 0 0 1.75rem;
   max-width: 38ch;
 }
@@ -157,7 +157,7 @@ body {
   flex-direction: column;
   gap: 0.7rem;
   font-size: 0.95rem;
-  color: #d8d6cf;
+  color: rgba(255, 255, 255, 0.92);
 }
 .auth-highlights .check {
   display: inline-grid;
@@ -171,7 +171,7 @@ body {
 }
 .auth-foot {
   font-size: 0.8rem;
-  color: #8d8b84;
+  color: rgba(255, 255, 255, 0.7);
 }
 .auth-form-side {
   display: grid;
@@ -1331,4 +1331,67 @@ h1 {
   .prose-editor {
     max-width: none;
   }
+}
+
+/* ---- Hand-drawn (Excalidraw) treatment ---- */
+:root {
+  --ink: #2f2e3a;
+  --wob-a: 16px 11px 18px 9px / 9px 17px 11px 16px;
+  --wob-b: 11px 18px 10px 17px / 16px 10px 18px 11px;
+  --wob-c: 18px 10px 15px 12px / 12px 15px 10px 18px;
+  --wob-btn: 13px 8px 14px 9px / 9px 14px 8px 13px;
+}
+:root[data-theme='dark'] {
+  --ink: #5a5966;
+}
+
+/* Sketchy ink borders + irregular corners on the main surfaces */
+.card,
+.doc-item,
+.template-card,
+.modal,
+.comments-panel,
+.cmdk,
+.notif-dropdown,
+.user-dropdown,
+.export-dropdown,
+.mention-menu {
+  border: 1.6px solid var(--ink) !important;
+  border-radius: var(--wob-a) !important;
+}
+
+/* Vary the wobble so repeated cards don't look identical */
+.doc-item:nth-of-type(3n) {
+  border-radius: var(--wob-b) !important;
+}
+.doc-item:nth-of-type(3n + 1) {
+  border-radius: var(--wob-c) !important;
+}
+.template-card:nth-of-type(even) {
+  border-radius: var(--wob-b) !important;
+}
+
+/* Action buttons + inputs get a drawn look (skip text/icon-only chrome) */
+button:not(.link):not(.tb-btn):not(.menu-item):not(.nav-item):not(.folder-del):not(.avatar-btn),
+input,
+select,
+.mention-wrap textarea,
+.search-input {
+  border: 1.6px solid var(--ink) !important;
+  border-radius: var(--wob-btn) !important;
+}
+
+.badge {
+  border: 1.4px solid var(--ink) !important;
+  border-radius: 11px 6px 12px 7px / 7px 12px 6px 11px !important;
+}
+
+.nav-item.active {
+  border: 1.5px solid var(--ink) !important;
+  border-radius: var(--wob-btn) !important;
+}
+
+/* Toolbar island reads as a single drawn panel */
+.editor-bar {
+  border-bottom: 1.6px solid var(--ink) !important;
 }
