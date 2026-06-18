@@ -1571,3 +1571,112 @@ h1 {
     max-width: none;
   }
 }
+
+/* ---- UI polish pass ---- */
+
+/* Accessible, on-brand focus ring */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.outline-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Refined custom scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+  border: 3px solid var(--bg);
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+/* Card hover lift */
+.doc-item {
+  transition: transform 0.14s ease, border-color 0.15s, box-shadow 0.15s;
+}
+.doc-item:hover {
+  transform: translateY(-2px);
+}
+
+/* Primary-button micro-interaction (flat/icon variants excluded) */
+button:not(.secondary):not(.danger):not(.link):not(.tb-btn):not(.menu-item):not(.nav-item):not(.outline-item):not(.slash-item):not(.cmdk-item):not(.mention-item):not(.avatar-btn):not(.bell-btn):not(.icon-btn) {
+  box-shadow: 0 1px 2px rgba(20, 20, 18, 0.08);
+}
+button:not(.secondary):not(.danger):not(.link):not(.tb-btn):not(.menu-item):not(.nav-item):not(.outline-item):not(.slash-item):not(.cmdk-item):not(.mention-item):not(.avatar-btn):not(.bell-btn):not(.icon-btn):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(20, 20, 18, 0.16);
+}
+button:active {
+  transform: translateY(0);
+}
+
+/* Subtle entrance animations for overlays */
+@keyframes rtc-pop {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes rtc-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.modal,
+.cmdk,
+.notif-dropdown,
+.user-dropdown,
+.export-dropdown,
+.outline-popover,
+.slash-menu,
+.version-modal {
+  animation: rtc-pop 0.13s ease-out;
+}
+.modal-backdrop,
+.cmdk-backdrop {
+  animation: rtc-fade 0.13s ease-out;
+}
+
+/* Tighter heading typography */
+h1,
+.page-title,
+.auth-headline {
+  letter-spacing: -0.015em;
+}
+
+/* Sticky, lightly separated app header on the documents page */
+.docs-page .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+  padding: 0.75rem 0;
+  margin: -0.5rem 0 0.5rem;
+}
+
+/* Nicer empty-state text */
+.docs-main > p.muted {
+  padding: 2.5rem 0;
+  text-align: center;
+}
